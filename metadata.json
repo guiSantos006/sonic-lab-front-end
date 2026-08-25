@@ -1,0 +1,6 @@
+{
+  "name": "SONIC_LAB",
+  "description": "Premium sound kit marketplace. Buy and sell drum kits, sample packs, and synth presets.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
