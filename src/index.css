@@ -1,20 +1,50 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
   
-  --color-background: #f9f9f9;
-  --color-on-background: #111111;
-  --color-primary: #000000;
-  --color-on-primary: #ffffff;
+  --color-background: var(--theme-bg);
+  --color-on-background: var(--theme-text);
+  --color-primary: var(--theme-primary);
+  --color-on-primary: var(--theme-on-primary);
   
-  --color-outline-variant: #e5e5e5;
-  --color-surface-container: #eeeeee;
-  --color-surface-container-high: #e8e8e8;
-  --color-surface-container-low: #f3f3f3;
-  --color-surface-container-lowest: #ffffff;
+  --color-outline-variant: var(--theme-border);
+  --color-surface-container: var(--theme-surface);
+  --color-surface-container-high: var(--theme-surface-high);
+  --color-surface-container-low: var(--theme-surface-low);
+  --color-surface-container-lowest: var(--theme-surface-lowest);
+}
+
+:root {
+  color-scheme: light;
+  --theme-bg: #f9f9f9;
+  --theme-text: #111111;
+  --theme-primary: #000000;
+  --theme-on-primary: #ffffff;
+  
+  --theme-border: #e5e5e5;
+  --theme-surface: #eeeeee;
+  --theme-surface-high: #e8e8e8;
+  --theme-surface-low: #f3f3f3;
+  --theme-surface-lowest: #ffffff;
+}
+
+.dark {
+  color-scheme: dark;
+  --theme-bg: #09090b;
+  --theme-text: #f4f4f5;
+  --theme-primary: #ffffff;
+  --theme-on-primary: #000000;
+  
+  --theme-border: #222227;
+  --theme-surface: #121215;
+  --theme-surface-high: #1c1c21;
+  --theme-surface-low: #0e0e12;
+  --theme-surface-lowest: #151519;
 }
 
 @layer utilities {
@@ -45,10 +75,140 @@ input[type="file"]::file-selector-button:hover {
   background: #f9f9f9;
 }
 
+.dark input[type="file"]::file-selector-button {
+  border: 1px solid #262626;
+  background: #171717;
+  color: #f3f3f3;
+}
+
+.dark input[type="file"]::file-selector-button:hover {
+  border-color: #ffffff;
+  background: #222222;
+}
+
 /* Base style resets */
 body {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-on-background);
 }
+
+/* ==========================================================================
+   Parallax Component Styles (Exact Osmo Parallax Image Layers Specification)
+   ========================================================================== */
+@font-face {
+  font-family: 'PP Neue Corp Wide';
+  src: url('https://cdn.prod.website-files.com/671752cd4027f01b1b8f1c7f/6717e399d30a606fed425914_PPNeueCorp-WideUltrabold.woff2') format('woff2');
+  font-weight: 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+.parallax-reveal-container {
+  width: 100%;
+  position: relative;
+  will-change: transform, opacity;
+}
+
+.parallax {
+  width: 100%;
+  position: relative;
+  height: 100svh;
+  min-height: 100svh;
+  overflow: hidden;
+}
+
+.parallax__header {
+  z-index: 2;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  min-height: 100svh;
+  display: flex;
+  position: relative;
+}
+
+.parallax__visuals {
+  object-fit: cover;
+  width: 100%;
+  max-width: none;
+  height: 115%;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.parallax__layers {
+  object-fit: cover;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+}
+
+.parallax__layer-img {
+  pointer-events: none;
+  object-fit: cover;
+  width: 100%;
+  max-width: none;
+  height: 117.5%;
+  position: absolute;
+  top: -17.5%;
+  left: 0;
+}
+
+.parallax__layer-img.is-third {
+  top: -20%;
+}
+
+.parallax__layer-title {
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100svh;
+  display: flex;
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+.parallax__title {
+  pointer-events: auto;
+  text-align: center;
+  text-transform: uppercase;
+  margin-top: 0;
+  margin-bottom: 0.1em;
+  margin-right: 0.075em;
+  font-family: 'PP Neue Corp Wide', var(--font-sans), sans-serif;
+  font-size: clamp(2.5rem, 11vw, 10rem);
+  font-weight: 800;
+  line-height: 1;
+  position: relative;
+  color: #ffffff;
+  text-shadow: 0 4px 30px rgba(0, 0, 0, 0.7);
+}
+
+.parallax__fade {
+  z-index: 30;
+  width: 100%;
+  height: 32%;
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(8, 9, 13, 0.2) 20%,
+    rgba(8, 9, 13, 0.55) 55%,
+    rgba(8, 9, 13, 0.88) 85%,
+    var(--color-background, #08090d) 100%
+  );
+}
+
+
 

@@ -25,6 +25,10 @@ export interface UserProfile {
   location: string;
   bio: string;
   avatar: string;
+  email?: string;
+  token?: string;
 }
 
-export type ViewType = 'home' | 'catalog' | 'sell' | 'details' | 'profile';
+export type ThemeMode = 'light' | 'dark';
+
+export type ViewType = 'home' | 'catalog' | 'sell' | 'details' | 'profile' | 'login' | 'register';

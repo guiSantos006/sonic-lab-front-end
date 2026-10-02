@@ -1,6 +1,8 @@
 import { Kit } from '../types';
 import { Play, Pause, ShoppingCart, CreditCard, ChevronLeft, Volume2, Sparkles, AlertCircle } from 'lucide-react';
 import React, { useState, useEffect, useRef } from 'react';
+import VinylRecord from './VinylRecord';
+import { audioPlayer } from '../utils/audioPlayer';
 
 interface DetailsViewProps {
   kit: Kit;
@@ -23,6 +25,13 @@ export default function DetailsView({
   const [time, setTime] = useState('0:00 / 1:45');
   const timerRef = useRef<any>(null);
 
+  useEffect(() => {
+    return () => {
+      audioPlayer.stop();
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
   // Contents default fallback
   const contents = kit.contents || {
     'Snares / Claps': 45,
@@ -40,6 +49,7 @@ export default function DetailsView({
           const next = prev + 1.25;
           if (next >= 100) {
             setIsPlaying(false);
+            audioPlayer.stop();
             clearInterval(timerRef.current);
             return 0;
           }
@@ -61,7 +71,16 @@ export default function DetailsView({
   }, [isPlaying]);
 
   const handlePlayToggle = () => {
-    setIsPlaying(!isPlaying);
+    if (isPlaying) {
+      audioPlayer.stop();
+      setIsPlaying(false);
+    } else {
+      setIsPlaying(true);
+      audioPlayer.play(kit.id, kit.bpm || 120, kit.category, () => {
+        setIsPlaying(false);
+        setProgress(0);
+      });
+    }
   };
 
   const handleWaveformClick = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -76,7 +95,7 @@ export default function DetailsView({
     setTime(`${minutes}:${seconds.toString().padStart(2, '0')} / 1:45`);
 
     if (!isPlaying) {
-      setIsPlaying(true);
+      handlePlayToggle();
     }
   };
 
@@ -87,7 +106,7 @@ export default function DetailsView({
       <div className="flex justify-start">
         <button
           onClick={onBack}
-          className="flex items-center gap-2 font-mono text-xs text-neutral-500 hover:text-black hover:underline cursor-pointer transition-colors"
+          className="flex items-center gap-2 font-mono text-xs text-neutral-500 hover:text-black dark:hover:text-white hover:underline cursor-pointer transition-colors"
         >
           <ChevronLeft className="w-4 h-4" />
           Back to list
@@ -95,37 +114,54 @@ export default function DetailsView({
       </div>
 
       <div className="grid grid-cols-12 gap-8 md:gap-12">
-        {/* LEFT: Cover and basic badges */}
+        {/* LEFT: Cover and minimalist vinyl turntable */}
         <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
-          <div className="w-full aspect-square md:aspect-[4/3] lg:aspect-square bg-neutral-100 border border-neutral-200 relative overflow-hidden group">
-            <img
-              src={kit.coverImage}
-              alt={kit.title}
-              className="w-full h-full object-cover grayscale transition-transform duration-700 ease-out group-hover:scale-102"
-              referrerPolicy="no-referrer"
-            />
-            {/* Subtle aesthetic gradient overlay */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent mix-blend-multiply" />
+          <div className="w-full aspect-square md:aspect-[4/3] lg:aspect-square bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 relative overflow-hidden group flex items-center justify-center p-6">
+            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10 dark:to-white/[0.02]" />
+
+            {/* Minimalist Vinyl Record Turntable */}
+            <div
+              className={`relative z-10 transition-all duration-700 ease-out flex items-center justify-center ${
+                isPlaying
+                  ? 'scale-105'
+                  : 'scale-95 group-hover:scale-100 opacity-90 group-hover:opacity-100'
+              }`}
+            >
+              <VinylRecord
+                size="lg"
+                isPlaying={isPlaying}
+                title={kit.title}
+                coverImage={kit.coverImage}
+                showTonearm={true}
+                onTogglePlay={handlePlayToggle}
+              />
+            </div>
+
+            {/* Minimalist status badge */}
+            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400 bg-white/70 dark:bg-black/60 px-2.5 py-1 border border-neutral-200 dark:border-white/10 backdrop-blur-sm">
+              <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
+              {isPlaying ? '33 RPM PLAYING' : 'VINYL READY'}
+            </div>
           </div>
 
           {/* Specs Metas */}
           <div className="flex flex-wrap gap-2">
-            <span className="border border-neutral-200 bg-neutral-50 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 uppercase font-bold tracking-wider">
+            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
               {kit.sampleRate || 'WAV 24-BIT'}
             </span>
-            <span className="border border-neutral-200 bg-neutral-50 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 uppercase font-bold tracking-wider">
+            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
               {kit.royaltyFree ? 'ROYALTY FREE' : 'PERSONAL LICENSE'}
             </span>
-            <span className="border border-neutral-200 bg-neutral-50 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 uppercase font-bold tracking-wider">
+            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
               {kit.fileSize || '980 MB'}
             </span>
             {kit.bpm && (
-              <span className="border border-neutral-200 bg-neutral-50 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 uppercase font-bold tracking-wider">
+              <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
                 {kit.bpm} BPM
               </span>
             )}
             {kit.key && (
-              <span className="border border-neutral-200 bg-neutral-50 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 uppercase font-bold tracking-wider">
+              <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
                 KEY: {kit.key}
               </span>
             )}
@@ -133,7 +169,7 @@ export default function DetailsView({
         </div>
 
         {/* RIGHT: Meta info headers, Simulated player and actions */}
-        <div className="col-span-12 lg:col-span-5 flex flex-col justify-start gap-8 lg:pl-6 lg:border-l lg:border-neutral-200">
+        <div className="col-span-12 lg:col-span-5 flex flex-col justify-start gap-8 lg:pl-6 lg:border-l lg:border-neutral-200 dark:lg:border-neutral-800">
           
           {/* Header titles */}
           <div>
@@ -143,19 +179,19 @@ export default function DetailsView({
             <h1 className="font-sans text-3xl md:text-4xl font-extrabold text-primary tracking-tighter leading-none mb-4 uppercase">
               {kit.title}
             </h1>
-            <div className="font-mono text-2xl font-extrabold text-black bg-neutral-50 border border-neutral-200 px-4 py-2 inline-block">
+            <div className="font-mono text-2xl font-extrabold text-black dark:text-white bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 px-4 py-2 inline-block">
               ${kit.price.toFixed(2)}
             </div>
           </div>
 
           {/* Audio Player */}
-          <div className="border border-black p-5 flex flex-col gap-4 bg-white shadow-[0_4px_20px_rgba(0,0,0,0.02)]">
+          <div className="border border-black dark:border-neutral-700 p-5 flex flex-col gap-4 bg-white dark:bg-neutral-900/90 shadow-sm">
             <div className="flex justify-between items-center">
-              <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-black flex items-center gap-1.5">
+              <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-black dark:text-white flex items-center gap-1.5">
                 <Volume2 className="w-3.5 h-3.5" />
                 Demo Preview
               </span>
-              <span className="font-mono text-[10px] text-neutral-500 font-medium" id="time-display">
+              <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 font-medium" id="time-display">
                 {time}
               </span>
             </div>
@@ -163,21 +199,21 @@ export default function DetailsView({
             <div className="flex items-center gap-4">
               <button
                 onClick={handlePlayToggle}
-                className="w-12 h-12 flex-shrink-0 bg-black text-white hover:opacity-90 flex items-center justify-center transition-opacity focus:outline-none focus:ring-1 focus:ring-black cursor-pointer rounded-none"
+                className="w-12 h-12 flex-shrink-0 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 flex items-center justify-center transition-opacity focus:outline-none cursor-pointer rounded-none"
                 aria-label={isPlaying ? 'Pause' : 'Play'}
                 id="play-btn"
               >
                 {isPlaying ? (
-                  <Pause className="w-5 h-5 fill-white text-white" />
+                  <Pause className="w-5 h-5 fill-current text-current" />
                 ) : (
-                  <Play className="w-5 h-5 fill-white text-white translate-x-0.5" />
+                  <Play className="w-5 h-5 fill-current text-current translate-x-0.5" />
                 )}
               </button>
 
               {/* Progress Bar Waveform simulation background */}
               <div
                 onClick={handleWaveformClick}
-                className="relative w-full h-10 bg-neutral-100 cursor-pointer overflow-hidden border border-neutral-200 flex items-center gap-[3px] px-2"
+                className="relative w-full h-10 bg-neutral-100 dark:bg-neutral-800 cursor-pointer overflow-hidden border border-neutral-200 dark:border-neutral-700 flex items-center gap-[3px] px-2"
                 id="waveform-container"
               >
                 {/* Simulated dynamic bars */}
@@ -191,7 +227,7 @@ export default function DetailsView({
                       key={idx}
                       style={{ height: `${randomHeight}%` }}
                       className={`w-[4px] min-w-[2px] transition-all duration-150 ${
-                        isActive ? 'bg-black' : 'bg-neutral-300'
+                        isActive ? 'bg-black dark:bg-white' : 'bg-neutral-300 dark:bg-neutral-700'
                       }`}
                     />
                   );
@@ -202,21 +238,21 @@ export default function DetailsView({
 
           {/* Detailed Content Accordeon Layout (Wireframe table list) */}
           <div className="space-y-4">
-            <h2 className="font-mono text-xs font-bold text-neutral-400 border-b border-neutral-200 pb-2 uppercase tracking-widest">
+            <h2 className="font-mono text-xs font-bold text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-2 uppercase tracking-widest">
               Contents Breakdown
             </h2>
             <ul className="grid grid-cols-2 gap-y-3 gap-x-6 font-sans text-xs">
               {Object.entries(contents).map(([key, val]) => (
                 <li
                   key={key}
-                  className="flex justify-between items-end border-b border-neutral-100 pb-1"
+                  className="flex justify-between items-end border-b border-neutral-100 dark:border-neutral-800/80 pb-1"
                 >
-                  <span className="text-neutral-500 font-sans">{key}</span>
-                  <span className="font-mono font-bold text-neutral-800">{val}</span>
+                  <span className="text-neutral-500 dark:text-neutral-400 font-sans">{key}</span>
+                  <span className="font-mono font-bold text-neutral-800 dark:text-neutral-200">{val}</span>
                 </li>
               ))}
             </ul>
-            <p className="font-sans text-xs text-neutral-500 leading-relaxed mt-4">
+            <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed mt-4">
               {kit.description || 'A beautifully designed electronic catalog essential package. Contains pristine modular sounds optimized with sufficient width and volume ranges for instant drop-in integration.'}
             </p>
           </div>
@@ -227,8 +263,8 @@ export default function DetailsView({
               onClick={() => onAddToCart(kit)}
               className={`w-full py-3.5 px-6 font-sans text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 cursor-pointer border ${
                 isInCart
-                  ? 'bg-neutral-100 border-neutral-300 text-neutral-600 hover:bg-neutral-200'
-                  : 'bg-black text-white hover:opacity-90 border-black'
+                  ? 'bg-neutral-100 dark:bg-neutral-800 border-neutral-300 dark:border-neutral-700 text-neutral-600 dark:text-neutral-300 hover:bg-neutral-200 dark:hover:bg-neutral-700'
+                  : 'bg-black dark:bg-white text-white dark:text-black hover:opacity-90 border-black dark:border-white'
               }`}
             >
               <ShoppingCart className="w-4 h-4" />
@@ -236,7 +272,7 @@ export default function DetailsView({
             </button>
             <button
               onClick={() => onBuyNow(kit)}
-              className="w-full border border-black text-black bg-white hover:bg-neutral-50 py-3.5 px-6 font-sans text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 cursor-pointer transition-colors"
+              className="w-full border border-black dark:border-white/30 text-black dark:text-white bg-white dark:bg-transparent hover:bg-neutral-50 dark:hover:bg-white/10 py-3.5 px-6 font-sans text-xs font-bold uppercase tracking-wider flex justify-center items-center gap-2 cursor-pointer transition-colors"
             >
               <CreditCard className="w-4 h-4" />
               Buy Now (Express)

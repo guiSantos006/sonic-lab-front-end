@@ -9,7 +9,7 @@ export default function Footer({ onNavigate, onOpenModal }: FooterProps) {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full bg-background border-t border-outline-variant py-10 md:py-12 mt-auto">
+    <footer className="w-full bg-background/80 backdrop-blur-sm border-t border-outline-variant py-10 md:py-12 mt-auto relative z-10">
       <div className="flex flex-col md:flex-row justify-between items-center w-full px-6 md:px-8 max-w-[1440px] mx-auto gap-6 font-mono text-xs">
         {/* Logo/Brand */}
         <button

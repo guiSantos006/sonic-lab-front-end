@@ -1,6 +1,8 @@
 {
-  "name": "SONIC_LAB",
-  "description": "Premium sound kit marketplace. Buy and sell drum kits, sample packs, and synth presets.",
+  "name": "teste frontSonicLab",
+  "description": "Imported from GitHub: Felipe-R-Faria/frontSonicLab",
   "requestFramePermissions": [],
-  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }

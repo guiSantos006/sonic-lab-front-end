@@ -5,9 +5,10 @@ import React, { useState, useRef } from 'react';
 interface SellViewProps {
   onPublish: (kit: Kit) => void;
   onNavigate: (view: any) => void;
+  creatorName?: string;
 }
 
-export default function SellView({ onPublish, onNavigate }: SellViewProps) {
+export default function SellView({ onPublish, onNavigate, creatorName }: SellViewProps) {
   // Form fields state
   const [title, setTitle] = useState('');
   const [category, setCategory] = useState<'drum_kit' | 'sample_pack' | 'preset_bank'>('drum_kit');
@@ -24,6 +25,7 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
 
   const [dragOver, setDragOver] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   // File Inputs references
   const coverInputRef = useRef<HTMLInputElement>(null);
@@ -86,10 +88,11 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
   // Submit Handler
   const handlePublishSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title || !price || !description) {
-      alert('Please fill in the Kit Title, Price, and Description fields.');
+    if (!title.trim() || !price || !description.trim()) {
+      setFormError('Please fill in the Kit Title, Price, and Description fields.');
       return;
     }
+    setFormError(null);
 
     // Default brutalist abstract artwork if none is chosen
     const resolvedCover = coverPreviewUrl || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=400';
@@ -97,7 +100,7 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
     const newKit: Kit = {
       id: `custom-kit-${Date.now()}`,
       title: title,
-      creator: 'ALEXANDER_VOID', // Current logged in profile
+      creator: (creatorName || 'PRODUCER').toUpperCase(),
       category: category,
       price: parseFloat(price) || 29.00,
       description: description,
@@ -130,36 +133,48 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
       
       {/* Upper Title Section */}
       <header className="mb-12 text-center">
-        <h1 className="font-sans text-4xl md:text-5xl font-extrabold text-black mb-2 uppercase tracking-tighter leading-none">
+        <h1 className="font-sans text-4xl md:text-5xl font-extrabold text-primary mb-2 uppercase tracking-tighter leading-none">
           Sell New Kit
         </h1>
-        <p className="font-sans text-sm text-neutral-500">
+        <p className="font-sans text-sm text-neutral-500 dark:text-neutral-400">
           Upload and list your high-fidelity sonic assets to the marketplace catalog.
         </p>
       </header>
 
       {isSuccess ? (
-        <div className="py-20 border border-black bg-white flex flex-col items-center justify-center text-center gap-4">
-          <CheckCircle className="w-16 h-16 text-black animate-bounce" />
-          <h2 className="font-sans text-2xl font-extrabold uppercase tracking-tight">
+        <div className="py-20 border border-black dark:border-white bg-white dark:bg-neutral-900 flex flex-col items-center justify-center text-center gap-4">
+          <CheckCircle className="w-16 h-16 text-black dark:text-white animate-bounce" />
+          <h2 className="font-sans text-2xl font-extrabold uppercase tracking-tight text-primary">
             Asset Published!
           </h2>
-          <p className="font-sans text-xs text-neutral-500 max-w-xs px-4">
+          <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 max-w-xs px-4">
             Your new sound package was successfully registered and is now listed first within the catalog & your active listings!
           </p>
         </div>
       ) : (
         <form onSubmit={handlePublishSubmit} className="space-y-12">
+          {formError && (
+            <div className="p-4 bg-red-50 dark:bg-red-950/40 border border-red-300 dark:border-red-900 text-red-800 dark:text-red-300 font-mono text-xs flex items-center justify-between">
+              <span>{formError}</span>
+              <button
+                type="button"
+                onClick={() => setFormError(null)}
+                className="text-red-800 dark:text-red-300 hover:text-black dark:hover:text-white font-bold ml-2 cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+          )}
           
           {/* Metadata Section */}
           <section className="space-y-6">
-            <h2 className="font-sans text-lg font-bold border-b border-neutral-200 pb-2 uppercase tracking-tight text-neutral-800">
+            <h2 className="font-sans text-lg font-bold border-b border-neutral-200 dark:border-neutral-800 pb-2 uppercase tracking-tight text-primary">
               1. Metadata
             </h2>
 
             {/* Title */}
             <div className="space-y-2">
-              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500" htmlFor="kit_title">
+              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400" htmlFor="kit_title">
                 Kit Title
               </label>
               <input
@@ -169,13 +184,13 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                 placeholder="e.g. TR-808 Analog Stems"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                className="w-full bg-white border-b border-neutral-300 focus:border-black p-3 font-sans text-sm transition-colors outline-none focus:ring-0"
+                className="w-full bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-black dark:text-white focus:border-black dark:focus:border-white p-3 font-sans text-sm transition-colors outline-none focus:ring-0"
               />
             </div>
 
             {/* Category selection radio list */}
             <div className="space-y-2">
-              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500">
+              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400">
                 Category
               </label>
               <div className="flex flex-wrap gap-6">
@@ -185,9 +200,9 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                     name="category"
                     checked={category === 'drum_kit'}
                     onChange={() => setCategory('drum_kit')}
-                    className="text-black border-black focus:ring-black bg-transparent w-4 h-4 cursor-pointer"
+                    className="text-black dark:text-white border-neutral-400 dark:border-neutral-600 focus:ring-black bg-transparent w-4 h-4 cursor-pointer"
                   />
-                  <span className="font-mono text-xs uppercase text-neutral-800">Drum Kit</span>
+                  <span className="font-mono text-xs uppercase text-neutral-800 dark:text-neutral-200">Drum Kit</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -195,9 +210,9 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                     name="category"
                     checked={category === 'sample_pack'}
                     onChange={() => setCategory('sample_pack')}
-                    className="text-black border-black focus:ring-black bg-transparent w-4 h-4 cursor-pointer"
+                    className="text-black dark:text-white border-neutral-400 dark:border-neutral-600 focus:ring-black bg-transparent w-4 h-4 cursor-pointer"
                   />
-                  <span className="font-mono text-xs uppercase text-neutral-800">Sample Pack</span>
+                  <span className="font-mono text-xs uppercase text-neutral-800 dark:text-neutral-200">Sample Pack</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
@@ -205,16 +220,16 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                     name="category"
                     checked={category === 'preset_bank'}
                     onChange={() => setCategory('preset_bank')}
-                    className="text-black border-black focus:ring-black bg-transparent w-4 h-4 cursor-pointer"
+                    className="text-black dark:text-white border-neutral-400 dark:border-neutral-600 focus:ring-black bg-transparent w-4 h-4 cursor-pointer"
                   />
-                  <span className="font-mono text-xs uppercase text-neutral-800">Serum Bank</span>
+                  <span className="font-mono text-xs uppercase text-neutral-800 dark:text-neutral-200">Serum Bank</span>
                 </label>
               </div>
             </div>
 
             {/* Price */}
             <div className="space-y-2 max-w-xs">
-              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500" htmlFor="price">
+              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400" htmlFor="price">
                 Price (USD)
               </label>
               <div className="relative">
@@ -228,14 +243,14 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                   placeholder="29.99"
                   value={price}
                   onChange={(e) => setPrice(e.target.value)}
-                  className="w-full bg-white border-b border-neutral-300 focus:border-black p-3 pl-8 font-sans text-sm outline-none transition-colors"
+                  className="w-full bg-transparent border-b border-neutral-300 dark:border-neutral-700 text-black dark:text-white focus:border-black dark:focus:border-white p-3 pl-8 font-sans text-sm outline-none transition-colors"
                 />
               </div>
             </div>
 
             {/* Description text area */}
             <div className="space-y-2">
-              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500" htmlFor="description">
+              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400" htmlFor="description">
                 Description
               </label>
               <textarea
@@ -245,20 +260,20 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                 placeholder="Describe the sonic characteristics, synthesizers used, contents & compatibility formats..."
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                className="w-full bg-white border border-neutral-200 focus:border-black p-3 font-sans text-xs outline-none transition-all placeholder:text-neutral-400 resize-y"
+                className="w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-black dark:text-white focus:border-black dark:focus:border-white p-3 font-sans text-xs outline-none transition-all placeholder:text-neutral-400 dark:placeholder:text-neutral-500 resize-y"
               />
             </div>
           </section>
 
           {/* Core Assets section */}
           <section className="space-y-6">
-            <h2 className="font-sans text-lg font-bold border-b border-neutral-200 pb-2 uppercase tracking-tight text-neutral-800">
+            <h2 className="font-sans text-lg font-bold border-b border-neutral-200 dark:border-neutral-800 pb-2 uppercase tracking-tight text-primary">
               2. Assets
             </h2>
 
             {/* Dotted cover photo dragging area */}
             <div className="space-y-2">
-              <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500">
+              <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400">
                 Cover Image
               </span>
               <div
@@ -266,12 +281,12 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                 onDragLeave={onDragLeaveHandler}
                 onDrop={onDropHandler}
                 onClick={() => coverInputRef.current?.click()}
-                className={`border-2 border-dashed p-8 text-center hover:border-black transition-all cursor-pointer bg-white relative group flex flex-col items-center justify-center min-h-[220px] ${
-                  dragOver ? 'border-black bg-neutral-50' : 'border-neutral-200'
+                className={`border-2 border-dashed p-8 text-center hover:border-black dark:hover:border-white transition-all cursor-pointer bg-white dark:bg-neutral-900 relative group flex flex-col items-center justify-center min-h-[220px] ${
+                  dragOver ? 'border-black dark:border-white bg-neutral-50 dark:bg-neutral-800' : 'border-neutral-200 dark:border-neutral-800'
                 }`}
               >
                 {coverPreviewUrl ? (
-                  <div className="relative w-40 h-40 border border-neutral-200">
+                  <div className="relative w-40 h-40 border border-neutral-200 dark:border-neutral-700">
                     <img
                       src={coverPreviewUrl}
                       alt="PREVIEW"
@@ -285,8 +300,8 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                   </div>
                 ) : (
                   <>
-                    <Image className="w-12 h-12 text-neutral-300 group-hover:text-black transition-colors mb-3" />
-                    <p className="font-sans text-xs text-neutral-600 group-hover:text-black transition-colors">
+                    <Image className="w-12 h-12 text-neutral-300 dark:text-neutral-600 group-hover:text-black dark:group-hover:text-white transition-colors mb-3" />
+                    <p className="font-sans text-xs text-neutral-600 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white transition-colors">
                       Drag & drop cover art or <span className="underline font-bold">browse local files</span>
                     </p>
                     <p className="font-mono text-[9px] text-neutral-400 mt-1">
@@ -309,17 +324,17 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
               
               {/* MP3 */}
               <div className="space-y-2">
-                <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500">
+                <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400">
                   Audio Demo (MP3/WAV)
                 </span>
-                <div className="border border-neutral-200 p-3 bg-white hover:border-black transition-colors flex items-center justify-between">
-                  <span className="font-sans text-xs text-neutral-500 truncate mr-4">
+                <div className="border border-neutral-200 dark:border-neutral-800 p-3 bg-white dark:bg-neutral-900 hover:border-black dark:hover:border-white transition-colors flex items-center justify-between">
+                  <span className="font-sans text-xs text-neutral-500 dark:text-neutral-400 truncate mr-4">
                     {demoFileName || 'No audio chosen'}
                   </span>
                   <button
                     type="button"
                     onClick={() => audioInputRef.current?.click()}
-                    className="cursor-pointer font-mono text-[10px] border border-black px-3 py-1 bg-white hover:bg-neutral-50 font-bold uppercase transition-colors"
+                    className="cursor-pointer font-mono text-[10px] border border-black dark:border-neutral-600 px-3 py-1 bg-white dark:bg-neutral-800 text-black dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-700 font-bold uppercase transition-colors"
                   >
                     Browse
                   </button>
@@ -335,17 +350,17 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
 
               {/* ZIP */}
               <div className="space-y-2">
-                <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500">
+                <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400">
                   Main File (ZIP)
                 </span>
-                <div className="border border-neutral-200 p-3 bg-white hover:border-black transition-colors flex items-center justify-between">
-                  <span className="font-sans text-xs text-neutral-500 truncate mr-4">
+                <div className="border border-neutral-200 dark:border-neutral-800 p-3 bg-white dark:bg-neutral-900 hover:border-black dark:hover:border-white transition-colors flex items-center justify-between">
+                  <span className="font-sans text-xs text-neutral-500 dark:text-neutral-400 truncate mr-4">
                     {zipFileName || 'No file selected (.zip)'}
                   </span>
                   <button
                     type="button"
                     onClick={() => zipInputRef.current?.click()}
-                    className="cursor-pointer font-mono text-[10px] border border-black px-3 py-1 bg-white hover:bg-neutral-50 font-bold uppercase transition-colors"
+                    className="cursor-pointer font-mono text-[10px] border border-black dark:border-neutral-600 px-3 py-1 bg-white dark:bg-neutral-800 text-black dark:text-white hover:bg-neutral-50 dark:hover:bg-neutral-700 font-bold uppercase transition-colors"
                   >
                     Browse
                   </button>
@@ -364,13 +379,13 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
 
           {/* Taxonomy Section */}
           <section className="space-y-6">
-            <h2 className="font-sans text-lg font-bold border-b border-neutral-200 pb-2 uppercase tracking-tight text-neutral-800">
+            <h2 className="font-sans text-lg font-bold border-b border-neutral-200 dark:border-neutral-800 pb-2 uppercase tracking-tight text-primary">
               3. Taxonomy
             </h2>
             
             {/* Custom Tag Input with + Button */}
             <div className="space-y-3">
-              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500" htmlFor="custom_tag_input">
+              <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400" htmlFor="custom_tag_input">
                 Add Custom Tags
               </label>
               <div className="flex gap-2 max-w-md">
@@ -390,13 +405,13 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                         handleAddCustomTag();
                       }
                     }}
-                    className="w-full bg-white border border-neutral-300 focus:border-black pl-8 pr-3 py-2 font-mono text-xs uppercase outline-none transition-colors"
+                    className="w-full bg-white dark:bg-neutral-900 border border-neutral-300 dark:border-neutral-700 text-black dark:text-white focus:border-black dark:focus:border-white pl-8 pr-3 py-2 font-mono text-xs uppercase outline-none transition-colors"
                   />
                 </div>
                 <button
                   type="button"
                   onClick={() => handleAddCustomTag()}
-                  className="bg-black text-white hover:opacity-90 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shrink-0 transition-opacity"
+                  className="bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shrink-0 transition-opacity"
                   title="Add tag"
                 >
                   <Plus className="w-3.5 h-3.5" />
@@ -415,13 +430,13 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                   {tags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black text-white font-mono text-[10px] uppercase tracking-wider font-bold"
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-black dark:bg-white text-white dark:text-black font-mono text-[10px] uppercase tracking-wider font-bold"
                     >
                       {tag}
                       <button
                         type="button"
                         onClick={() => handleRemoveTag(tag)}
-                        className="hover:text-neutral-300 cursor-pointer p-0.5"
+                        className="hover:text-neutral-300 dark:hover:text-neutral-700 cursor-pointer p-0.5"
                         title={`Remove ${tag}`}
                       >
                         <X className="w-3 h-3" />
@@ -434,7 +449,7 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
 
             {/* Suggested Available Preset Tags */}
             <div className="space-y-2 pt-2">
-              <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500">
+              <span className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400">
                 Suggested Presets (Click to toggle)
               </span>
               <div className="flex flex-wrap gap-2">
@@ -447,8 +462,8 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
                       onClick={() => handleTagToggle(tag)}
                       className={`px-3 py-1.5 border font-mono text-[10px] uppercase tracking-wider transition-all cursor-pointer ${
                         isSelected
-                          ? 'bg-neutral-200 text-neutral-800 border-neutral-400 font-bold'
-                          : 'bg-white text-neutral-600 border-neutral-200 hover:border-black'
+                          ? 'bg-neutral-200 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200 border-neutral-400 dark:border-neutral-600 font-bold'
+                          : 'bg-white dark:bg-neutral-900 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-800 hover:border-black dark:hover:border-white'
                       }`}
                     >
                       {isSelected ? `✓ ${tag}` : `+ ${tag}`}
@@ -460,17 +475,17 @@ export default function SellView({ onPublish, onNavigate }: SellViewProps) {
           </section>
 
           {/* Bottom actions list */}
-          <div className="pt-8 flex flex-col-reverse md:flex-row justify-end gap-4 border-t border-neutral-200 md:items-center">
+          <div className="pt-8 flex flex-col-reverse md:flex-row justify-end gap-4 border-t border-neutral-200 dark:border-neutral-800 md:items-center">
             <button
               type="button"
               onClick={() => onNavigate('home')}
-              className="font-mono text-xs border border-neutral-300 hover:border-black px-8 py-3 bg-white uppercase tracking-wider font-semibold cursor-pointer transition-colors"
+              className="font-mono text-xs border border-neutral-300 dark:border-neutral-700 hover:border-black dark:hover:border-white px-8 py-3 bg-white dark:bg-neutral-900 text-black dark:text-white uppercase tracking-wider font-semibold cursor-pointer transition-colors"
             >
               Cancel Draft
             </button>
             <button
               type="submit"
-              className="font-mono text-xs bg-black text-white px-8 py-3 hover:opacity-90 transition-all uppercase tracking-wider font-extrabold cursor-pointer"
+              className="font-mono text-xs bg-black dark:bg-white text-white dark:text-black px-8 py-3 hover:opacity-90 transition-all uppercase tracking-wider font-extrabold cursor-pointer"
             >
               Publish Kit
             </button>

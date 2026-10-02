@@ -1,6 +1,8 @@
 import { Kit, UserProfile } from '../types';
-import { Download, Edit3, Save, CheckCircle, Sliders, ExternalLink, Settings, ShieldCheck, Mail, Upload } from 'lucide-react';
+import { Download, Edit3, Save, CheckCircle, Sliders, ExternalLink, Settings, ShieldCheck, Mail, Upload, Sun, Moon } from 'lucide-react';
 import React, { useState, useRef } from 'react';
+import { useTheme } from '../context/ThemeContext';
+import { getBackendBaseUrl } from '../utils/authService';
 
 interface ProfileViewProps {
   profile: UserProfile;
@@ -19,6 +21,8 @@ export default function ProfileView({
   onSelectKit,
   onShowNotification
 }: ProfileViewProps) {
+  const { theme, setTheme } = useTheme();
+
   // Tabs "My Kits" | "For Sale" | "Settings"
   const [activeTab, setActiveTab] = useState<'my_kits' | 'for_sale' | 'settings'>('my_kits');
   
@@ -141,7 +145,7 @@ export default function ProfileView({
     <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 animate-fade-in">
       
       {/* Profile Header Block */}
-      <header className="flex flex-col md:flex-row gap-8 items-start md:items-center w-full bg-white border border-neutral-200 p-6 shadow-[0_4px_22px_rgba(0,0,0,0.01)] relative">
+      <header className="flex flex-col md:flex-row gap-8 items-start md:items-center w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 shadow-[0_4px_22px_rgba(0,0,0,0.01)] relative">
         {/* Avatar Image circle */}
         <div className="flex flex-col items-center gap-1.5 shrink-0 select-none">
           <div
@@ -149,9 +153,9 @@ export default function ProfileView({
             onDragOver={isEditing ? handleDragOver : undefined}
             onDragLeave={isEditing ? handleDragLeave : undefined}
             onDrop={isEditing ? handleDrop : undefined}
-            className={`w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border border-black bg-neutral-100 flex-shrink-0 relative group transition-all duration-200 ${
-              isEditing ? 'cursor-pointer hover:scale-[1.02] border-dashed border-2 ring-1 ring-neutral-300 hover:ring-black' : ''
-            } ${isDragging ? 'bg-neutral-200 ring-2 ring-black border-solid' : ''}`}
+            className={`w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border border-black dark:border-white bg-neutral-100 dark:bg-neutral-800 flex-shrink-0 relative group transition-all duration-200 ${
+              isEditing ? 'cursor-pointer hover:scale-[1.02] border-dashed border-2 ring-1 ring-neutral-300 dark:ring-neutral-600 hover:ring-black dark:hover:ring-white' : ''
+            } ${isDragging ? 'bg-neutral-200 dark:bg-neutral-700 ring-2 ring-black dark:ring-white border-solid' : ''}`}
             title={isEditing ? 'Click or drop image to upload new avatar' : undefined}
           >
             <img
@@ -207,7 +211,7 @@ export default function ProfileView({
                   required
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
-                  className="w-full bg-neutral-50 border border-neutral-300 p-2 font-mono text-xs focus:ring-0 focus:border-black outline-none"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
                 />
               </div>
               <div className="space-y-1">
@@ -216,7 +220,7 @@ export default function ProfileView({
                   type="text"
                   value={role}
                   onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-neutral-50 border border-neutral-300 p-2 font-mono text-xs focus:ring-0 focus:border-black outline-none"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
                 />
               </div>
               <div className="space-y-1">
@@ -225,7 +229,7 @@ export default function ProfileView({
                   type="text"
                   value={location}
                   onChange={(e) => setLocation(e.target.value)}
-                  className="w-full bg-neutral-50 border border-neutral-300 p-2 font-mono text-xs focus:ring-0 focus:border-black outline-none"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
                 />
               </div>
               
@@ -237,12 +241,12 @@ export default function ProfileView({
                   placeholder="https://images.unsplash.com/..."
                   value={avatar}
                   onChange={(e) => setAvatar(e.target.value)}
-                  className="w-full bg-neutral-50 border border-neutral-300 p-2 font-mono text-xs focus:ring-0 focus:border-black outline-none"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
                 />
               </div>
 
               {/* Preset Avatar Selection Grid */}
-              <div className="space-y-1.5 md:col-span-2 border-t border-neutral-100 pt-3">
+              <div className="space-y-1.5 md:col-span-2 border-t border-neutral-100 dark:border-neutral-800 pt-3">
                 <span className="block font-mono text-[9px] text-neutral-400 uppercase font-bold">
                   Quick-Select Conceptual Presets
                 </span>
@@ -278,8 +282,8 @@ export default function ProfileView({
                       }}
                       className={`flex items-center gap-1.5 border px-2.5 py-1 font-mono text-[9px] uppercase font-bold tracking-wider cursor-pointer transition-all ${
                         avatar === preset.url
-                          ? 'bg-black text-white border-black shadow-sm'
-                          : 'bg-neutral-50 text-neutral-600 border-neutral-200 hover:border-neutral-400'
+                          ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm'
+                          : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500'
                       }`}
                     >
                       <img
@@ -300,14 +304,14 @@ export default function ProfileView({
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
                   rows={2}
-                  className="w-full bg-neutral-50 border border-neutral-300 p-2 font-sans text-xs focus:ring-0 focus:border-black outline-none resize-none"
+                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-sans text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none resize-none"
                 />
               </div>
 
               <div className="md:col-span-2 flex gap-2 pt-2">
                 <button
                   type="submit"
-                  className="bg-black text-white hover:opacity-90 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
+                  className="bg-black dark:bg-white text-white dark:text-black hover:opacity-90 px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-1.5 cursor-pointer"
                 >
                   <Save className="w-3.5 h-3.5" />
                   Save Info
@@ -315,7 +319,7 @@ export default function ProfileView({
                 <button
                   type="button"
                   onClick={cancelEditing}
-                  className="border border-neutral-300 hover:border-black px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider bg-white cursor-pointer"
+                  className="border border-neutral-300 dark:border-neutral-700 hover:border-black dark:hover:border-white px-4 py-2 font-mono text-xs font-bold uppercase tracking-wider bg-white dark:bg-neutral-900 text-neutral-800 dark:text-neutral-200 cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -325,7 +329,7 @@ export default function ProfileView({
             <div className="flex flex-col gap-2">
               <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 w-full">
                 <div>
-                  <h1 className="font-sans text-2xl md:text-3.5xl font-extrabold text-black tracking-tighter uppercase leading-none">
+                  <h1 className="font-sans text-2xl md:text-3.5xl font-extrabold text-primary tracking-tighter uppercase leading-none">
                     {profile.name}
                   </h1>
                   <p className="font-mono text-[10px] text-neutral-400 mt-1 uppercase tracking-widest leading-none">
@@ -335,14 +339,14 @@ export default function ProfileView({
                 
                 <button
                   onClick={startEditing}
-                  className="bg-black text-white px-5 py-2.5 hover:opacity-90 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer rounded-none"
+                  className="bg-black dark:bg-white text-white dark:text-black px-5 py-2.5 hover:opacity-90 font-mono text-xs font-bold uppercase tracking-wider flex items-center gap-2 cursor-pointer rounded-none"
                 >
-                  <Edit3 className="w-4 h-4 text-white" />
+                  <Edit3 className="w-4 h-4 text-current" />
                   Edit Profile
                 </button>
               </div>
 
-              <p className="font-sans text-sm text-neutral-600 max-w-2xl mt-2 leading-relaxed">
+              <p className="font-sans text-sm text-neutral-600 dark:text-neutral-400 max-w-2xl mt-2 leading-relaxed">
                 {profile.bio}
               </p>
             </div>
@@ -351,13 +355,13 @@ export default function ProfileView({
       </header>
 
       {/* Tabs list switchers */}
-      <div className="w-full border-b border-neutral-200 flex gap-8 overflow-x-auto no-scrollbar">
+      <div className="w-full border-b border-neutral-200 dark:border-neutral-800 flex gap-8 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('my_kits')}
           className={`pb-3 font-mono text-xs font-bold tracking-wider uppercase transition-colors whitespace-nowrap cursor-pointer ${
             activeTab === 'my_kits'
-              ? 'border-b-2 border-black text-black'
-              : 'border-b-2 border-transparent text-neutral-400 hover:text-black'
+              ? 'border-b-2 border-black dark:border-white text-primary font-extrabold'
+              : 'border-b-2 border-transparent text-neutral-400 dark:text-neutral-500 hover:text-black dark:hover:text-white'
           }`}
         >
           My Kits {purchasedKits.length > 0 && `(${purchasedKits.length})`}
@@ -366,8 +370,8 @@ export default function ProfileView({
           onClick={() => setActiveTab('for_sale')}
           className={`pb-3 font-mono text-xs font-bold tracking-wider uppercase transition-colors whitespace-nowrap cursor-pointer ${
             activeTab === 'for_sale'
-              ? 'border-b-2 border-black text-black'
-              : 'border-b-2 border-transparent text-neutral-400 hover:text-black'
+              ? 'border-b-2 border-black dark:border-white text-primary font-extrabold'
+              : 'border-b-2 border-transparent text-neutral-400 dark:text-neutral-500 hover:text-black dark:hover:text-white'
           }`}
         >
           For Sale {creatorKits.length > 0 && `(${creatorKits.length})`}
@@ -376,8 +380,8 @@ export default function ProfileView({
           onClick={() => setActiveTab('settings')}
           className={`pb-3 font-mono text-xs font-bold tracking-wider uppercase transition-colors whitespace-nowrap cursor-pointer ${
             activeTab === 'settings'
-              ? 'border-b-2 border-black text-black'
-              : 'border-b-2 border-transparent text-neutral-400 hover:text-black'
+              ? 'border-b-2 border-black dark:border-white text-primary font-extrabold'
+              : 'border-b-2 border-transparent text-neutral-400 dark:text-neutral-500 hover:text-black dark:hover:text-white'
           }`}
         >
           Settings
@@ -388,8 +392,8 @@ export default function ProfileView({
       <section className="min-h-[300px]">
         {activeTab === 'my_kits' && (
           <div className="flex flex-col gap-6">
-            <div className="flex justify-between items-center pb-2 border-b border-neutral-100">
-              <h2 className="font-sans text-lg font-bold uppercase tracking-tight text-neutral-800">
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-100 dark:border-neutral-800">
+              <h2 className="font-sans text-lg font-bold uppercase tracking-tight text-primary">
                 Purchased Kits & Licenses
               </h2>
               <span className="font-mono text-[9px] text-neutral-400 uppercase tracking-widest font-bold">
@@ -398,9 +402,9 @@ export default function ProfileView({
             </div>
 
             {purchasedKits.length === 0 ? (
-              <div className="py-16 text-center border-2 border-dashed border-neutral-200 text-neutral-400 text-sm font-sans flex flex-col items-center gap-1.5 justify-center">
+              <div className="py-16 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-400 dark:text-neutral-500 text-sm font-sans flex flex-col items-center gap-1.5 justify-center">
                 <span>You have not purchased any products yet.</span>
-                <span className="text-xs text-neutral-400 font-mono">Licenses will automatically register upon sandbox payment checkout.</span>
+                <span className="text-xs text-neutral-400 dark:text-neutral-500 font-mono">Licenses will automatically register upon sandbox payment checkout.</span>
               </div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -408,10 +412,10 @@ export default function ProfileView({
                   <div
                     key={item.id}
                     onClick={() => onSelectKit(item.id)}
-                    className="group flex flex-col gap-3 cursor-pointer border border-transparent hover:border-neutral-200 transition-all p-3 -m-3 bg-white"
+                    className="group flex flex-col gap-3 cursor-pointer border border-transparent hover:border-neutral-200 dark:hover:border-neutral-800 transition-all p-3 -m-3 bg-transparent hover:bg-neutral-50 dark:hover:bg-neutral-900/60"
                   >
-                    <div className="w-full aspect-square bg-neutral-100 overflow-hidden relative border border-neutral-100">
-                      <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
+                    <div className="w-full aspect-square bg-neutral-100 dark:bg-neutral-800 overflow-hidden relative border border-neutral-100 dark:border-neutral-800">
+                      <div className="absolute inset-0 bg-black/5 dark:bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity z-10" />
                       
                       {item.coverImage === 'waveform' ? (
                         <div className="w-full h-full flex flex-col justify-end p-4 bg-gradient-to-t from-black to-neutral-800">
@@ -432,14 +436,14 @@ export default function ProfileView({
                     </div>
 
                     <div className="flex justify-between items-start gap-2">
-                      <h3 className="font-sans text-xs font-bold truncate group-hover:underline text-black">
+                      <h3 className="font-sans text-xs font-bold truncate group-hover:underline text-black dark:text-white">
                         {item.title}
                       </h3>
                       <button
                         onClick={(e) => startDownload(e, item.id, item.title)}
                         disabled={downloadingId !== null}
-                        className={`text-neutral-400 hover:text-black hover:bg-neutral-100 p-1 rounded-none transition-colors ${
-                          downloadingId === item.id ? 'animate-bounce text-black' : ''
+                        className={`text-neutral-400 dark:text-neutral-500 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 p-1 rounded-none transition-colors ${
+                          downloadingId === item.id ? 'animate-bounce text-black dark:text-white' : ''
                         }`}
                         title="Download ZIP"
                       >
@@ -448,16 +452,16 @@ export default function ProfileView({
                     </div>
 
                     <div className="flex gap-2 items-center">
-                      <span className="font-mono text-[9px] text-neutral-400 border border-neutral-200 px-1.5 py-0.5 uppercase bg-neutral-50 font-bold">
+                      <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
                         {item.sampleRate || 'WAV'}
                       </span>
                       {item.bpm && (
-                        <span className="font-mono text-[9px] text-neutral-400 border border-neutral-200 px-1.5 py-0.5 uppercase bg-neutral-50 font-bold">
+                        <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
                           {item.bpm} BPM
                         </span>
                       )}
                       {item.tags.includes('PRESET') || item.category === 'preset_bank' ? (
-                        <span className="font-mono text-[9px] text-neutral-400 border border-neutral-200 px-1.5 py-0.5 uppercase bg-neutral-50 font-bold">
+                        <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
                           PRESETS
                         </span>
                       ) : null}
@@ -469,11 +473,11 @@ export default function ProfileView({
           </div>
         )}
 
-        {/* Tab "For Sale" (Dynamic list of published assets by Alexander) */}
+        {/* Tab "For Sale" (Dynamic list of published assets by user profile) */}
         {activeTab === 'for_sale' && (
           <div className="flex flex-col gap-6 animate-fade-in">
-            <div className="flex justify-between items-center pb-2 border-b border-neutral-100">
-              <h2 className="font-sans text-lg font-bold uppercase tracking-tight text-neutral-800">
+            <div className="flex justify-between items-center pb-2 border-b border-neutral-100 dark:border-neutral-800">
+              <h2 className="font-sans text-lg font-bold uppercase tracking-tight text-primary">
                 Active Listings
               </h2>
               <span className="font-mono text-[9px] text-neutral-400 uppercase tracking-widest font-bold">
@@ -482,7 +486,7 @@ export default function ProfileView({
             </div>
 
             {creatorKits.length === 0 ? (
-              <div className="py-16 text-center border-2 border-dashed border-neutral-200 text-neutral-400 text-sm font-sans flex flex-col items-center gap-1.5 justify-center">
+              <div className="py-16 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 text-neutral-400 text-sm font-sans flex flex-col items-center gap-1.5 justify-center">
                 <span>You don't have any items for sale yet.</span>
                 <span className="text-xs text-neutral-400 font-mono">Click "Sell" in the menu above to publish your first expansion kit!</span>
               </div>
@@ -492,35 +496,35 @@ export default function ProfileView({
                   <div
                     key={item.id}
                     onClick={() => onSelectKit(item.id)}
-                    className="group flex flex-col gap-3 cursor-pointer border border-transparent hover:border-neutral-200 transition-all p-3 -m-3 bg-white"
+                    className="group flex flex-col gap-3 cursor-pointer border border-transparent hover:border-neutral-200 dark:hover:border-neutral-700 transition-all p-3 -m-3 bg-white dark:bg-neutral-900"
                   >
-                    <div className="w-full aspect-square bg-neutral-100 overflow-hidden relative border border-neutral-100">
+                    <div className="w-full aspect-square bg-neutral-100 dark:bg-neutral-800 overflow-hidden relative border border-neutral-100 dark:border-neutral-800">
                       <img
                         src={item.coverImage}
                         alt={item.title}
                         className="w-full h-full object-cover grayscale"
                         referrerPolicy="no-referrer"
                       />
-                      <div className="absolute top-2 right-2 bg-black text-white px-2 py-0.5 font-mono text-[9px] font-bold">
+                      <div className="absolute top-2 right-2 bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 font-mono text-[9px] font-bold">
                         ACTIVE
                       </div>
                     </div>
 
                     <div className="flex justify-between items-start gap-1">
-                      <h3 className="font-sans text-xs font-bold truncate group-hover:underline text-black">
+                      <h3 className="font-sans text-xs font-bold truncate group-hover:underline text-black dark:text-white">
                         {item.title}
                       </h3>
-                      <span className="font-mono text-xs font-extrabold text-neutral-800 whitespace-nowrap bg-neutral-100 px-1 border border-neutral-200">
+                      <span className="font-mono text-xs font-extrabold text-neutral-800 dark:text-neutral-200 whitespace-nowrap bg-neutral-100 dark:bg-neutral-800 px-1 border border-neutral-200 dark:border-neutral-700">
                         ${item.price.toFixed(2)}
                       </span>
                     </div>
 
                     <div className="flex gap-2 items-center">
-                      <span className="font-mono text-[9px] text-neutral-400 border border-neutral-200 px-1.5 py-0.5 uppercase bg-neutral-50 font-bold">
+                      <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
                         {item.category.toUpperCase().replace('_', ' ')}
                       </span>
                       {item.fileCount && (
-                        <span className="font-mono text-[9px] text-neutral-400 border border-neutral-200 px-1.5 py-0.5 uppercase bg-neutral-50 font-bold">
+                        <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
                           {item.fileCount} FILES
                         </span>
                       )}
@@ -534,10 +538,63 @@ export default function ProfileView({
 
         {/* Tab settings */}
         {activeTab === 'settings' && (
-          <div className="max-w-2xl bg-white border border-neutral-200 p-6 space-y-8 animate-fade-in">
-            <h3 className="font-sans text-lg font-bold border-b border-neutral-100 pb-2 uppercase tracking-tight text-neutral-800">
+          <div className="max-w-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 space-y-8 animate-fade-in">
+            <h3 className="font-sans text-lg font-bold border-b border-neutral-100 dark:border-neutral-800 pb-2 uppercase tracking-tight text-primary">
               Account Preferences
             </h3>
+
+            {/* Global Theme Switcher Preference Card */}
+            <div className="border-b border-neutral-100 dark:border-neutral-800 pb-6 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <h4 className="font-sans text-sm font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
+                    {theme === 'dark' ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
+                    Theme Appearance
+                  </h4>
+                  <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
+                    Toggle between Light and Dark modes. Persisted in localStorage and synchronizes across the application.
+                  </p>
+                </div>
+                <span className="font-mono text-[10px] uppercase font-bold px-2 py-0.5 border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
+                  {theme.toUpperCase()} ACTIVE
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3 pt-2">
+                <button
+                  type="button"
+                  id="profile-theme-light-btn"
+                  onClick={() => {
+                    setTheme('light');
+                    onShowNotification('Switched to Light Mode (saved to localStorage)');
+                  }}
+                  className={`py-3 px-4 border font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                    theme === 'light'
+                      ? 'bg-black text-white border-black dark:bg-white dark:text-black shadow-sm'
+                      : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-black dark:hover:border-white'
+                  }`}
+                >
+                  <Sun className="w-4 h-4 text-amber-500" />
+                  Light Mode
+                </button>
+                <button
+                  type="button"
+                  id="profile-theme-dark-btn"
+                  onClick={() => {
+                    setTheme('dark');
+                    onShowNotification('Switched to Dark Mode (saved to localStorage)');
+                  }}
+                  className={`py-3 px-4 border font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
+                    theme === 'dark'
+                      ? 'bg-black text-white border-black dark:bg-white dark:text-black shadow-sm'
+                      : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-black dark:hover:border-white'
+                  }`}
+                >
+                  <Moon className="w-4 h-4 text-amber-400" />
+                  Dark Mode
+                </button>
+              </div>
+            </div>
 
             {/* Email Preferences checkbox */}
             <div className="flex items-start gap-3">
@@ -546,14 +603,14 @@ export default function ProfileView({
                 type="checkbox"
                 checked={emailNotifications}
                 onChange={() => setEmailNotifications(!emailNotifications)}
-                className="w-4 h-4 rounded-none border-black text-black focus:ring-black cursor-pointer mt-1"
+                className="w-4 h-4 rounded-none border-black dark:border-white text-black dark:text-white focus:ring-black cursor-pointer mt-1"
               />
               <div className="space-y-0.5">
-                <label htmlFor="email-notifs" className="font-sans text-sm font-bold text-neutral-800 cursor-pointer flex items-center gap-1.5">
+                <label htmlFor="email-notifs" className="font-sans text-sm font-bold text-neutral-800 dark:text-neutral-200 cursor-pointer flex items-center gap-1.5">
                   <Mail className="w-4 h-4 text-neutral-500" />
                   Email Notifications
                 </label>
-                <p className="font-sans text-xs text-neutral-500 leading-relaxed">
+                <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                   Receive an automated email alert every time a sound designer purchases one of your uploaded packs or comments on your profile.
                 </p>
               </div>
@@ -566,14 +623,14 @@ export default function ProfileView({
                 type="checkbox"
                 checked={twoFactor}
                 onChange={() => setTwoFactor(!twoFactor)}
-                className="w-4 h-4 rounded-none border-black text-black focus:ring-black cursor-pointer mt-1"
+                className="w-4 h-4 rounded-none border-black dark:border-white text-black dark:text-white focus:ring-black cursor-pointer mt-1"
               />
               <div className="space-y-0.5">
-                <label htmlFor="two-factor" className="font-sans text-sm font-bold text-neutral-800 cursor-pointer flex items-center gap-1.5">
+                <label htmlFor="two-factor" className="font-sans text-sm font-bold text-neutral-800 dark:text-neutral-200 cursor-pointer flex items-center gap-1.5">
                   <ShieldCheck className="w-4 h-4 text-neutral-500" />
                   Two-Factor Authentication (2FA)
                 </label>
-                <p className="font-sans text-xs text-neutral-500 leading-relaxed">
+                <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                   Enforce secure sign-in triggers to safeguard your listed library funds and digital payouts.
                 </p>
               </div>
@@ -587,7 +644,7 @@ export default function ProfileView({
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="bg-neutral-50 border border-neutral-300 focus:border-black p-2 font-mono text-xs outline-none cursor-pointer w-40"
+                className="bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-black dark:text-white focus:border-black dark:focus:border-white p-2 font-mono text-xs outline-none cursor-pointer w-40"
               >
                 <option value="USD">USD ($)</option>
                 <option value="EUR">EUR (€)</option>
@@ -600,18 +657,24 @@ export default function ProfileView({
             </div>
 
             {/* Simulated Workspace API parameters */}
-            <div className="border-t border-neutral-100 pt-6 space-y-2.5">
-              <h4 className="font-mono text-xs font-bold text-neutral-800 uppercase tracking-widest flex items-center gap-1.5">
+            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 space-y-2.5">
+              <h4 className="font-mono text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
                 <Settings className="w-4 h-4" />
                 API Keys & Sandbox telemetry
               </h4>
-              <p className="font-sans text-xs text-neutral-500 leading-relaxed">
+              <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
                 Connect your external instruments or synthesizers utilizing our modular webhook interfaces. Your security key is securely masked.
               </p>
-              <div className="bg-neutral-50 border border-neutral-200 p-3 font-mono text-[10px] text-neutral-600 space-y-1">
+              <div className="bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 space-y-1">
                 <div>WORKSPACE_ID: aistudio_sandbox_96865850</div>
-                <div>SERVER_STATUS: <span className="text-black font-extrabold uppercase">● active</span></div>
-                <div>SECURE_SHIELD_VITE_HMR: <span className="font-extrabold text-neutral-700">DISABLED</span></div>
+                <div>BACKEND_TARGET: <span className="text-primary font-bold">{getBackendBaseUrl()}</span></div>
+                {profile.token ? (
+                  <div>JWT_TOKEN: <span className="text-emerald-500 font-bold font-mono">{profile.token.slice(0, 18)}... (Ativo)</span></div>
+                ) : (
+                  <div>JWT_TOKEN: <span className="text-neutral-400">Nenhum token ativo</span></div>
+                )}
+                <div>SERVER_STATUS: <span className="text-emerald-500 font-extrabold uppercase">● active</span></div>
+                <div>THEME_PERSISTENCE: <span className="text-primary font-bold uppercase">localStorage ({theme})</span></div>
               </div>
             </div>
           </div>

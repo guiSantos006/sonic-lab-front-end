@@ -38,29 +38,29 @@ export function CartModal({
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white text-black border border-black max-w-md w-full p-6 relative flex flex-col gap-6 rounded-none">
+      <div className="bg-white dark:bg-neutral-900 text-black dark:text-white border border-black dark:border-neutral-700 max-w-md w-full p-6 relative flex flex-col gap-6 rounded-none shadow-2xl">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 hover:bg-neutral-100 cursor-pointer"
+          className="absolute top-4 right-4 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-black dark:text-white cursor-pointer"
         >
-          <X className="w-5 h-5 text-black" />
+          <X className="w-5 h-5 text-current" />
         </button>
 
         {hasCheckedOut ? (
           <div className="py-12 text-center flex flex-col items-center gap-4">
-            <CheckCircle2 className="w-16 h-16 text-black animate-bounce" />
-            <h3 className="font-sans text-xl font-extrabold uppercase tracking-tight">
+            <CheckCircle2 className="w-16 h-16 text-emerald-500 animate-bounce" />
+            <h3 className="font-sans text-xl font-extrabold uppercase tracking-tight text-primary">
               Order Complete!
             </h3>
-            <p className="font-sans text-sm text-neutral-500 max-w-[280px]">
+            <p className="font-sans text-sm text-neutral-500 dark:text-neutral-400 max-w-[280px]">
               Purchased sounds have been added directly to your **Profile Dashboard** list under "My Kits". Check your inbox for files!
             </p>
           </div>
         ) : (
           <>
             <div>
-              <h2 className="font-sans text-xl font-extrabold uppercase tracking-tight">
+              <h2 className="font-sans text-xl font-extrabold uppercase tracking-tight text-primary">
                 Shopping Cart
               </h2>
               <p className="font-mono text-xs text-neutral-400 uppercase tracking-widest mt-1">
@@ -75,32 +75,32 @@ export function CartModal({
             ) : (
               <>
                 {/* List items */}
-                <div className="max-h-60 overflow-y-auto divide-y divide-neutral-100 pr-1">
+                <div className="max-h-60 overflow-y-auto divide-y divide-neutral-100 dark:divide-neutral-800 pr-1">
                   {cartKits.map((item) => (
                     <div key={item.id} className="py-3 flex justify-between items-center gap-4">
                       <div className="flex items-center gap-3">
                         <img
                           src={item.coverImage}
                           alt={item.title}
-                          className="w-10 h-10 object-cover border border-neutral-100"
+                          className="w-10 h-10 object-cover border border-neutral-100 dark:border-neutral-800"
                         />
                         <div className="min-w-0">
-                          <h4 className="font-sans text-xs font-bold truncate">
+                          <h4 className="font-sans text-xs font-bold truncate text-primary">
                             {item.title}
                           </h4>
-                          <p className="font-sans text-[10px] text-neutral-500 uppercase tracking-wider">
+                          <p className="font-sans text-[10px] text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
                             By {item.creator}
                           </p>
                         </div>
                       </div>
 
                       <div className="flex items-center gap-3">
-                        <span className="font-mono text-xs font-bold bg-neutral-100 px-2 py-1">
+                        <span className="font-mono text-xs font-bold bg-neutral-100 dark:bg-neutral-800 px-2 py-1 text-primary">
                           ${item.price.toFixed(2)}
                         </span>
                         <button
                           onClick={() => onRemoveFromCart(item.id)}
-                          className="text-neutral-400 hover:text-black hover:bg-neutral-100 p-1 rounded transition-colors"
+                          className="text-neutral-400 hover:text-black dark:hover:text-white hover:bg-neutral-100 dark:hover:bg-neutral-800 p-1 rounded transition-colors"
                           title="Remover"
                         >
                           <Trash2 className="w-4 h-4" />
@@ -111,18 +111,18 @@ export function CartModal({
                 </div>
 
                 {/* Total value */}
-                <div className="border-t border-black pt-4 flex justify-between items-center">
-                  <span className="font-sans text-xs font-bold uppercase tracking-wider text-neutral-500">
+                <div className="border-t border-black dark:border-neutral-700 pt-4 flex justify-between items-center">
+                  <span className="font-sans text-xs font-bold uppercase tracking-wider text-neutral-500 dark:text-neutral-400">
                     Grand Total:
                   </span>
-                  <span className="font-mono text-lg font-extrabold">
+                  <span className="font-mono text-lg font-extrabold text-primary">
                     ${total.toFixed(2)}
                   </span>
                 </div>
 
                 {/* Checkout form */}
                 <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-                  <label htmlFor="checkout-email" className="font-mono text-[10px] uppercase tracking-wider text-neutral-600 block">
+                  <label htmlFor="checkout-email" className="font-mono text-[10px] uppercase tracking-wider text-neutral-600 dark:text-neutral-400 block">
                     Receive download link at:
                   </label>
                   <input
@@ -132,11 +132,11 @@ export function CartModal({
                     placeholder="e.g. producer@soniclab.com"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="w-full bg-neutral-50 border border-neutral-300 focus:border-black p-2.5 font-sans text-xs outline-none focus:ring-0"
+                    className="w-full bg-neutral-50 dark:bg-neutral-800 border border-neutral-300 dark:border-neutral-700 text-black dark:text-white focus:border-black dark:focus:border-white p-2.5 font-sans text-xs outline-none focus:ring-0"
                   />
                   <button
                     type="submit"
-                    className="w-full bg-black text-white hover:opacity-90 transition-opacity font-mono text-xs font-bold py-3 uppercase tracking-widest mt-2 flex items-center justify-center gap-1 cursor-pointer"
+                    className="w-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity font-mono text-xs font-bold py-3 uppercase tracking-widest mt-2 flex items-center justify-center gap-1 cursor-pointer"
                   >
                     <DollarSign className="w-4 h-4" />
                     Complete checkout
@@ -178,25 +178,25 @@ export function InfoModal({ isOpen, title, onClose, topic }: InfoModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white text-black border border-black max-w-md w-full p-6 relative flex flex-col gap-4 rounded-none">
+      <div className="bg-white dark:bg-neutral-900 text-black dark:text-white border border-black dark:border-neutral-700 max-w-md w-full p-6 relative flex flex-col gap-4 rounded-none shadow-2xl">
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-1 hover:bg-neutral-100 cursor-pointer"
+          className="absolute top-4 right-4 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-black dark:text-white cursor-pointer"
         >
-          <X className="w-5 h-5 text-black" />
+          <X className="w-5 h-5 text-current" />
         </button>
 
-        <h2 className="font-sans text-lg font-extrabold uppercase tracking-tight text-black border-b border-neutral-100 pb-2">
+        <h2 className="font-sans text-lg font-extrabold uppercase tracking-tight text-primary border-b border-neutral-100 dark:border-neutral-800 pb-2">
           {title}
         </h2>
 
-        <p className="font-sans text-xs text-neutral-600 leading-relaxed whitespace-pre-wrap">
+        <p className="font-sans text-xs text-neutral-600 dark:text-neutral-300 leading-relaxed whitespace-pre-wrap">
           {getContent()}
         </p>
 
         <button
           onClick={onClose}
-          className="mt-2 w-full bg-black text-white hover:opacity-90 transition-opacity font-mono text-xs py-2.5 uppercase tracking-wider cursor-pointer"
+          className="mt-2 w-full bg-black dark:bg-white text-white dark:text-black hover:opacity-90 transition-opacity font-mono text-xs py-2.5 uppercase tracking-wider cursor-pointer"
         >
           Acknowledged
         </button>

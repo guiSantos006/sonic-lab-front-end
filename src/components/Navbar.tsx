@@ -1,12 +1,17 @@
+import { useState } from 'react';
 import { ViewType } from '../types';
-import { ShoppingCart, User, Upload } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Menu, X, ArrowUpRight } from 'lucide-react';
+import ThemeToggle from './ThemeToggle';
 
 interface NavbarProps {
   currentView: ViewType;
   onNavigate: (view: ViewType) => void;
   cartCount: number;
   onOpenCart: () => void;
-  onLogin: () => void;
+  onLogin?: () => void;
+  isLoggedIn?: boolean;
+  userName?: string;
+  onLogout?: () => void;
 }
 
 export default function Navbar({
@@ -14,111 +19,205 @@ export default function Navbar({
   onNavigate,
   cartCount,
   onOpenCart,
-  onLogin
+  isLoggedIn = false,
+  userName,
+  onLogout,
 }: NavbarProps) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const handleNavClick = (view: ViewType) => {
+    onNavigate(view);
+    setMobileMenuOpen(false);
+  };
+
   return (
-    <nav className="sticky top-0 w-full bg-background/95 backdrop-blur-md border-b border-outline-variant z-50 transition-all duration-200">
-      <div className="flex justify-between items-center w-full px-6 md:px-8 py-4 max-w-[1440px] mx-auto">
-        <div className="flex items-center gap-8 md:gap-12">
-          {/* Brand Logo */}
+    <header className="sticky top-0 z-40 w-full border-b border-outline-variant/60 bg-background/85 backdrop-blur-md transition-colors duration-200">
+      <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between">
+        
+        {/* Brand Zone */}
+        <div className="flex items-center gap-6 lg:gap-10">
           <button
-            onClick={() => onNavigate('home')}
-            className="font-sans text-xl md:text-2xl font-extrabold text-primary tracking-tighter uppercase focus:outline-none cursor-pointer hover:opacity-85 transition-opacity"
             id="nav-logo"
+            onClick={() => handleNavClick('home')}
+            className="flex items-center gap-2 group cursor-pointer focus:outline-none"
+            aria-label="SONIC_LAB Home"
           >
-            SONIC_LAB
+            <div className="w-2 h-2 rounded-full bg-primary shrink-0 transition-transform group-hover:scale-125" />
+            <span className="font-mono text-sm sm:text-base font-bold tracking-widest text-primary uppercase select-none">
+              SONIC_LAB
+            </span>
           </button>
 
-          {/* Navigation Links (Desktop) */}
-          <div className="hidden md:flex items-center gap-6 font-sans text-sm font-medium tracking-wide">
+          {/* Minimalist Desktop Navigation Links */}
+          <nav className="hidden md:flex items-center gap-6 font-mono text-xs uppercase tracking-wider">
             <button
-              onClick={() => onNavigate('catalog')}
-              className={`py-1 border-b-2 transition-all duration-200 cursor-pointer ${
+              id="nav-link-browse"
+              onClick={() => handleNavClick('catalog')}
+              className={`transition-colors py-1 cursor-pointer select-none ${
                 currentView === 'catalog'
-                  ? 'text-primary border-primary font-bold'
-                  : 'text-neutral-500 border-transparent hover:text-primary hover:border-neutral-300'
+                  ? 'text-primary font-bold border-b border-primary'
+                  : 'text-neutral-500 hover:text-primary'
               }`}
             >
-              Browse
+              Catálogo
             </button>
             <button
-              onClick={() => onNavigate('catalog')}
-              className="py-1 border-b-2 border-transparent text-neutral-500 hover:text-primary hover:border-neutral-300 cursor-pointer transition-all duration-200"
+              id="nav-link-drumkits"
+              onClick={() => handleNavClick('catalog')}
+              className="text-neutral-500 hover:text-primary transition-colors py-1 cursor-pointer select-none"
             >
               Drum Kits
             </button>
             <button
-              onClick={() => onNavigate('catalog')}
-              className="py-1 border-b-2 border-transparent text-neutral-500 hover:text-primary hover:border-neutral-300 cursor-pointer transition-all duration-200"
+              id="nav-link-samples"
+              onClick={() => handleNavClick('catalog')}
+              className="text-neutral-500 hover:text-primary transition-colors py-1 cursor-pointer select-none"
             >
-              Sample Packs
+              Samples
             </button>
             <button
-              onClick={() => onNavigate('catalog')}
-              className="py-1 border-b-2 border-transparent text-neutral-500 hover:text-primary hover:border-neutral-300 cursor-pointer transition-all duration-200"
+              id="nav-link-serum"
+              onClick={() => handleNavClick('catalog')}
+              className="text-neutral-500 hover:text-primary transition-colors py-1 cursor-pointer select-none"
             >
-              Serum Banks
+              Presets
             </button>
             <button
-              onClick={() => onNavigate('sell')}
-              className={`py-1 border-b-2 transition-all duration-200 cursor-pointer ${
+              id="nav-link-sell"
+              onClick={() => handleNavClick('sell')}
+              className={`transition-colors py-1 cursor-pointer select-none flex items-center gap-1 ${
                 currentView === 'sell'
-                  ? 'text-primary border-primary font-bold'
-                  : 'text-neutral-500 border-transparent hover:text-primary hover:border-neutral-300'
+                  ? 'text-primary font-bold border-b border-primary'
+                  : 'text-neutral-500 hover:text-primary'
               }`}
             >
-              Sell
+              <span>Vender</span>
+              <ArrowUpRight className="w-3 h-3 opacity-60" />
             </button>
-          </div>
+          </nav>
         </div>
 
-        {/* Right Actions */}
-        <div className="flex items-center gap-4">
-          {/* Sell Button on Mobile / Tablet */}
-          <button
-            onClick={() => onNavigate('sell')}
-            className="md:hidden p-2 text-neutral-600 hover:text-primary focus:outline-none"
-            title="Vender som"
-          >
-            <Upload className="w-5 h-5" />
-          </button>
+        {/* Minimalist Action Controls */}
+        <div className="flex items-center gap-1 sm:gap-2">
+          {/* Theme Toggle */}
+          <ThemeToggle id="nav-theme-toggle" className="p-2" />
 
-          {/* Checkout Cart Button */}
+          {/* Minimal Cart Button */}
           <button
+            id="nav-btn-cart"
             onClick={onOpenCart}
-            className="relative p-2 text-neutral-800 hover:text-primary hover:bg-neutral-100 transition-all cursor-pointer focus:outline-none flex items-center justify-center rounded"
+            className="relative p-2 text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors cursor-pointer"
+            title="Carrinho"
             aria-label="Carrinho de compras"
           >
-            <ShoppingCart className="w-5 h-5" />
+            <ShoppingBag className="w-4 h-4" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-black text-white text-[10px] font-mono leading-none px-1.5 py-0.5 font-bold tracking-tighter">
+              <span className="absolute top-1 right-1 w-4 h-4 rounded-full bg-primary text-on-primary text-[10px] font-mono font-bold flex items-center justify-center tabular-nums leading-none">
                 {cartCount}
               </span>
             )}
           </button>
 
-          {/* Login Link */}
-          <button
-            onClick={onLogin}
-            className="hidden sm:inline font-sans text-sm text-neutral-500 hover:text-primary cursor-pointer transition-colors"
-          >
-            Login
-          </button>
+          {/* Divider */}
+          <div className="h-4 w-[1px] bg-outline-variant/60 mx-1 hidden sm:block" />
 
-          {/* Profile Switcher */}
+          {/* Auth State Controls */}
+          {isLoggedIn ? (
+            <div className="flex items-center gap-1 sm:gap-2">
+              <button
+                id="nav-btn-profile"
+                onClick={() => handleNavClick('profile')}
+                className={`flex items-center gap-1.5 px-2.5 py-1.5 font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer ${
+                  currentView === 'profile'
+                    ? 'text-primary font-bold'
+                    : 'text-neutral-600 dark:text-neutral-300 hover:text-primary'
+                }`}
+                title="Meu Perfil"
+              >
+                <User className="w-3.5 h-3.5" />
+                <span className="max-w-[100px] truncate hidden sm:inline">
+                  {userName || 'Produtor'}
+                </span>
+              </button>
+
+              {onLogout && (
+                <button
+                  id="nav-btn-logout"
+                  onClick={onLogout}
+                  className="p-2 text-neutral-400 hover:text-primary transition-colors cursor-pointer"
+                  title="Sair da conta"
+                  aria-label="Sair"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="flex items-center">
+              <button
+                id="nav-btn-login"
+                onClick={() => handleNavClick('login')}
+                className={`px-3.5 py-1.5 font-mono text-xs uppercase tracking-wider transition-all cursor-pointer border ${
+                  currentView === 'login'
+                    ? 'border-primary bg-primary text-on-primary font-bold'
+                    : 'border-outline-variant text-neutral-700 dark:text-neutral-300 hover:border-primary hover:text-primary'
+                }`}
+              >
+                Entrar
+              </button>
+            </div>
+          )}
+
+          {/* Mobile Menu Hamburger */}
           <button
-            onClick={() => onNavigate('profile')}
-            className={`font-sans text-sm cursor-pointer hover:underline transition-all duration-200 flex items-center gap-1.5 px-2.5 py-1.5 border border-transparent hover:border-black rounded ${
-              currentView === 'profile'
-                ? 'text-primary font-bold border-black bg-neutral-100'
-                : 'text-neutral-800'
-            }`}
+            id="nav-mobile-toggle"
+            type="button"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden p-2 text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors cursor-pointer"
+            aria-label="Menu"
           >
-            <User className="w-4 h-4 text-primary" />
-            <span className="hidden sm:inline font-sans">Profile</span>
+            {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
         </div>
       </div>
-    </nav>
+
+      {/* Mobile Drawer Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-outline-variant/60 bg-background/95 backdrop-blur-xl px-4 py-4 space-y-3 font-mono text-xs uppercase tracking-wider animate-in fade-in slide-in-from-top-2 duration-150">
+          <button
+            onClick={() => handleNavClick('catalog')}
+            className="w-full text-left py-2 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
+          >
+            <span>Catálogo Completo</span>
+            <span className="text-neutral-400">&rarr;</span>
+          </button>
+          <button
+            onClick={() => handleNavClick('sell')}
+            className="w-full text-left py-2 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
+          >
+            <span>Vender Som / Criador</span>
+            <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400" />
+          </button>
+          {isLoggedIn ? (
+            <button
+              onClick={() => handleNavClick('profile')}
+              className="w-full text-left py-2 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
+            >
+              <span>Meu Perfil ({userName || 'Produtor'})</span>
+              <User className="w-3.5 h-3.5 text-neutral-400" />
+            </button>
+          ) : (
+            <div className="pt-2">
+              <button
+                onClick={() => handleNavClick('login')}
+                className="w-full py-2.5 border border-primary bg-primary text-on-primary text-center font-mono text-xs uppercase tracking-wider font-bold"
+              >
+                Entrar
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </header>
   );
 }

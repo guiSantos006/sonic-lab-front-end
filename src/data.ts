@@ -232,11 +232,11 @@ export const PRESET_ITEMS = [
 ];
 
 export const DEFAULT_PROFILE: UserProfile = {
-  name: 'ALEXANDER_VOID',
+  name: 'PRODUCER',
   role: 'SOUND DESIGNER',
-  location: 'BERLIN',
-  bio: 'Specializing in brutalist techno percussion and algorithmic textures. Curator of high-fidelity auditory assets for modern production environments.',
-  avatar: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExWU-khnM2AizPlFsS50YOrhmiZmqRxGD1TjSh96cDG3AMOFG9A56e6gjJ8oDIMcDGpdF7oXSwXQsHWT6KhBary0LxB6wPQJ4v9KvOR-1YUOvOgz85oD7xBBl_A1s4O26gdxR62ZdoD9Srt8ADtBCNWdEq8VDik5sEBfUCFBTYvVK-bnGXPt5f0Sw8WcIH13UpvkjTRKbMGAnIfIR6UqzLPeCVzHJKbN_aqtzd01e6i7nsqDIDyWigdGkU9tFdFHiVVIfTPKaNRR3'
+  location: 'STUDIO',
+  bio: 'Criador e produtor musical independente no ecossistema SONIC_LAB.',
+  avatar: ''
 };
 
 export const PURCHASED_KITS_MOCK = [
