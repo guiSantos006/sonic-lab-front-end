@@ -910,10 +910,7 @@ export default function AuthSwitch({
           gap: 8px;
           letter-spacing: -0.01em;
           animation: sonic-tooltip-pop 0.2s ease;
-          background-color: ${isDark ? '#22262f' : '#2b2f3a'};
-          color: #ffffff;
-          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.25)'};
-          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
         }
         .alert-box .alert-badge {
           display: flex;
@@ -925,26 +922,25 @@ export default function AuthSwitch({
           font-weight: 900;
           font-size: 10px;
           flex-shrink: 0;
-          background-color: #ffffff;
-          color: #1e222b;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
         }
         .alert-error {
-          background-color: ${isDark ? '#232731' : '#2a2e38'};
-          color: #ffffff;
-          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.25)'};
+          background-color: ${isDark ? 'rgba(153, 27, 27, 0.35)' : '#fef2f2'};
+          color: ${isDark ? '#fca5a5' : '#b91c1c'};
+          border: 1px solid ${isDark ? 'rgba(248, 113, 113, 0.35)' : '#fecaca'};
         }
         .alert-error .alert-badge {
-          background-color: #ffffff;
-          color: #1e222b;
+          background-color: #ef4444;
+          color: #ffffff;
         }
         .alert-success {
-          background-color: ${isDark ? '#1e222b' : '#252933'};
-          color: #ffffff;
-          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.35)'};
+          background-color: ${isDark ? 'rgba(20, 83, 45, 0.35)' : '#f0fdf4'};
+          color: ${isDark ? '#86efac' : '#15803d'};
+          border: 1px solid ${isDark ? 'rgba(74, 222, 128, 0.35)' : '#bbf7d0'};
         }
         .alert-success .alert-badge {
-          background-color: #ffffff;
-          color: #1e222b;
+          background-color: #10b981;
+          color: #ffffff;
         }
 
         @media (max-width: 870px) {
