@@ -74,7 +74,7 @@ export default function HomeView({
           <span className="block mb-1 sm:mb-2">Your arsenal for</span>
           <MorphingText
             texts={[
-              'music production.',
+              'production.',
               'drum kits.',
               'sample packs.',
               'serum presets.',

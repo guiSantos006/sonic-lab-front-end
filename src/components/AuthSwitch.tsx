@@ -1,4 +1,4 @@
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, useRef } from 'react';
 import { ChevronLeft, ArrowRight, User as UserIcon, User, Mail, Lock, X, Eye, EyeOff } from 'lucide-react';
 import { UserProfile, ViewType } from '../types';
 import {
@@ -40,6 +40,29 @@ export default function AuthSwitch({
   const { isDark } = useTheme();
   const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
 
+  // Field input refs for focus and custom validation positioning
+  const loginEmailRef = useRef<HTMLInputElement>(null);
+  const loginPasswordRef = useRef<HTMLInputElement>(null);
+  const regNameRef = useRef<HTMLInputElement>(null);
+  const regEmailRef = useRef<HTMLInputElement>(null);
+  const regPasswordRef = useRef<HTMLInputElement>(null);
+
+  // Custom stylish validation tooltip state
+  const [activeTooltipField, setActiveTooltipField] = useState<string | null>(null);
+  const [tooltipMessage, setTooltipMessage] = useState<string>('');
+
+  const triggerValidationError = (
+    field: string,
+    message: string,
+    inputRef?: React.RefObject<HTMLInputElement | null>
+  ) => {
+    setActiveTooltipField(field);
+    setTooltipMessage(message);
+    if (inputRef?.current) {
+      inputRef.current.focus();
+    }
+  };
+
   // Sign In state
   const [loginEmail, setLoginEmail] = useState(initialEmail);
   const [loginPassword, setLoginPassword] = useState('');
@@ -57,6 +80,14 @@ export default function AuthSwitch({
   const [regError, setRegError] = useState<string | null>(null);
   const [regSuccess, setRegSuccess] = useState<string | null>(null);
 
+  // Reset tooltips when switching sign-in / sign-up mode
+  useEffect(() => {
+    setActiveTooltipField(null);
+    setTooltipMessage('');
+    setLoginError(null);
+    setRegError(null);
+  }, [isSignUp]);
+
   // Close on Escape key
   useEffect(() => {
     if (!onClose) return;
@@ -73,13 +104,18 @@ export default function AuthSwitch({
   const handleSignIn = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoginError(null);
+    setActiveTooltipField(null);
 
     if (!loginEmail.trim()) {
-      setLoginError('Informe seu e-mail.');
+      triggerValidationError('loginEmail', 'Preencha este campo.', loginEmailRef);
+      return;
+    }
+    if (!loginEmail.includes('@')) {
+      triggerValidationError('loginEmail', 'Insira um endereço de e-mail válido.', loginEmailRef);
       return;
     }
     if (!loginPassword) {
-      setLoginError('Digite sua senha.');
+      triggerValidationError('loginPassword', 'Preencha este campo.', loginPasswordRef);
       return;
     }
 
@@ -129,18 +165,31 @@ export default function AuthSwitch({
   const handleSignUp = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setRegError(null);
+    setActiveTooltipField(null);
 
     if (!regName.trim()) {
-      setRegError('Informe seu nome ou alias de produtor.');
+      triggerValidationError('regName', 'Preencha este campo.', regNameRef);
       return;
     }
-    if (!regEmail.trim() || !regEmail.includes('@')) {
-      setRegError('Informe um e-mail válido.');
+    if (!regEmail.trim()) {
+      triggerValidationError('regEmail', 'Preencha este campo.', regEmailRef);
+      return;
+    }
+    if (!regEmail.includes('@')) {
+      triggerValidationError('regEmail', 'Insira um endereço de e-mail válido.', regEmailRef);
+      return;
+    }
+    if (!regPassword) {
+      triggerValidationError('regPassword', 'Preencha este campo.', regPasswordRef);
       return;
     }
     const passCheck = validatePassword(regPassword);
     if (!passCheck.valid) {
-      setRegError(passCheck.message || 'A senha deve ter no mínimo 8 caracteres e conter pelo menos uma letra e um número.');
+      triggerValidationError(
+        'regPassword',
+        passCheck.message || 'Mínimo de 8 caracteres (letras e números).',
+        regPasswordRef
+      );
       return;
     }
 
@@ -383,6 +432,15 @@ export default function AuthSwitch({
           text-transform: uppercase;
         }
 
+        .sonic-field-container {
+          position: relative;
+          width: 100%;
+          max-width: 380px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+
         .input-field {
           max-width: 380px;
           width: 100%;
@@ -396,6 +454,97 @@ export default function AuthSwitch({
           padding: 0 0.4rem;
           position: relative;
           transition: 0.25s;
+        }
+
+        .input-field.has-error {
+          border-color: ${isDark ? '#ffffff' : '#111111'} !important;
+          box-shadow: 0 0 0 2px ${isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)'} !important;
+          animation: sonic-field-shake 0.35s ease;
+        }
+
+        @keyframes sonic-field-shake {
+          0%, 100% { transform: translateX(0); }
+          20%, 60% { transform: translateX(-4px); }
+          40%, 80% { transform: translateX(4px); }
+        }
+
+        .sonic-validation-tooltip {
+          position: absolute;
+          top: calc(100% - 2px);
+          left: 20px;
+          z-index: 50;
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          background-color: ${isDark ? '#22262f' : '#2b2f3a'};
+          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.22)' : 'rgba(255, 255, 255, 0.26)'};
+          color: #ffffff;
+          padding: 7px 14px 7px 9px;
+          border-radius: 7px;
+          box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.12);
+          font-family: var(--font-mono);
+          font-size: 0.74rem;
+          font-weight: 600;
+          white-space: nowrap;
+          pointer-events: none;
+          animation: sonic-tooltip-pop 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes sonic-tooltip-pop {
+          from {
+            opacity: 0;
+            transform: translateY(-4px) scale(0.96);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+
+        .sonic-validation-tooltip .tooltip-arrow {
+          position: absolute;
+          top: -6px;
+          left: 16px;
+          width: 0;
+          height: 0;
+          border-left: 6px solid transparent;
+          border-right: 6px solid transparent;
+          border-bottom: 6px solid ${isDark ? '#22262f' : '#2b2f3a'};
+        }
+
+        .sonic-validation-tooltip .tooltip-arrow::before {
+          content: '';
+          position: absolute;
+          top: -1px;
+          left: -7px;
+          width: 0;
+          height: 0;
+          border-left: 7px solid transparent;
+          border-right: 7px solid transparent;
+          border-bottom: 7px solid rgba(255, 255, 255, 0.28);
+          z-index: -1;
+        }
+
+        .sonic-validation-tooltip .tooltip-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 18px;
+          height: 18px;
+          border-radius: 4px;
+          background-color: #ffffff;
+          color: #1e222b;
+          font-family: var(--font-mono);
+          font-weight: 900;
+          font-size: 11px;
+          flex-shrink: 0;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+        }
+
+        .sonic-validation-tooltip .tooltip-text {
+          line-height: 1.2;
+          letter-spacing: -0.01em;
+          color: #ffffff;
         }
 
         .input-field.has-toggle {
@@ -453,6 +602,35 @@ export default function AuthSwitch({
         .input-field input::placeholder {
           color: ${isDark ? '#6b7280' : '#888888'};
           font-weight: 400;
+        }
+
+        .forgot-password-container {
+          width: 100%;
+          max-width: 380px;
+          display: flex;
+          justify-content: flex-start;
+          margin-top: 2px;
+          margin-bottom: 6px;
+          padding: 0 0.8rem;
+        }
+
+        .forgot-password-link {
+          font-family: var(--font-mono);
+          font-size: 0.72rem;
+          color: ${isDark ? '#9ca3af' : '#6b7280'};
+          background: none;
+          border: none;
+          padding: 0;
+          cursor: pointer;
+          text-decoration: underline;
+          text-underline-offset: 3px;
+          text-decoration-color: transparent;
+          transition: color 0.2s ease, text-decoration-color 0.2s ease;
+        }
+
+        .forgot-password-link:hover {
+          color: ${isDark ? '#ffffff' : '#111111'};
+          text-decoration-color: ${isDark ? '#ffffff' : '#111111'};
         }
 
         /* Botão principal com a fonte JetBrains Mono */
@@ -723,21 +901,50 @@ export default function AuthSwitch({
           font-family: var(--font-mono);
           width: 100%;
           max-width: 380px;
-          padding: 6px 12px;
-          margin-bottom: 6px;
+          padding: 8px 12px;
+          margin-bottom: 8px;
           border-radius: 8px;
-          font-size: 0.78rem;
-          text-align: center;
+          font-size: 0.74rem;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          letter-spacing: -0.01em;
+          animation: sonic-tooltip-pop 0.2s ease;
+          background-color: ${isDark ? '#22262f' : '#2b2f3a'};
+          color: #ffffff;
+          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.25)'};
+          box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+        }
+        .alert-box .alert-badge {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          width: 16px;
+          height: 16px;
+          border-radius: 4px;
+          font-weight: 900;
+          font-size: 10px;
+          flex-shrink: 0;
+          background-color: #ffffff;
+          color: #1e222b;
         }
         .alert-error {
-          background-color: ${isDark ? 'rgba(153, 27, 27, 0.3)' : '#fef2f2'};
-          color: ${isDark ? '#fca5a5' : '#b91c1c'};
-          border: 1px solid ${isDark ? 'rgba(248, 113, 113, 0.3)' : '#fecaca'};
+          background-color: ${isDark ? '#232731' : '#2a2e38'};
+          color: #ffffff;
+          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(255, 255, 255, 0.25)'};
+        }
+        .alert-error .alert-badge {
+          background-color: #ffffff;
+          color: #1e222b;
         }
         .alert-success {
-          background-color: ${isDark ? 'rgba(20, 83, 45, 0.3)' : '#f0fdf4'};
-          color: ${isDark ? '#86efac' : '#15803d'};
-          border: 1px solid ${isDark ? 'rgba(74, 222, 128, 0.3)' : '#bbf7d0'};
+          background-color: ${isDark ? '#1e222b' : '#252933'};
+          color: #ffffff;
+          border: 1px solid ${isDark ? 'rgba(255, 255, 255, 0.28)' : 'rgba(255, 255, 255, 0.35)'};
+        }
+        .alert-success .alert-badge {
+          background-color: #ffffff;
+          color: #1e222b;
         }
 
         @media (max-width: 870px) {
@@ -875,46 +1082,98 @@ export default function AuthSwitch({
         <div className="forms-container">
           <div className="signin-signup">
             {/* Sign In Form */}
-            <form className="sign-in-form" onSubmit={handleSignIn}>
+            <form className="sign-in-form" noValidate onSubmit={handleSignIn}>
               <h2 className="title">Sign in</h2>
 
               {loginError && (
-                <div className="alert-box alert-error">{loginError}</div>
+                <div className="alert-box alert-error">
+                  <div className="alert-badge">!</div>
+                  <span>{loginError}</span>
+                </div>
               )}
               {loginSuccess && (
-                <div className="alert-box alert-success">{loginSuccess}</div>
+                <div className="alert-box alert-success">
+                  <div className="alert-badge">✓</div>
+                  <span>{loginSuccess}</span>
+                </div>
               )}
 
-              <div className="input-field">
-                <i><Mail className="w-4.5 h-4.5" /></i>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                />
+              <div className="sonic-field-container">
+                <div className={`input-field ${activeTooltipField === 'loginEmail' ? 'has-error' : ''}`}>
+                  <i><Mail className="w-4.5 h-4.5" /></i>
+                  <input
+                    ref={loginEmailRef}
+                    type="email"
+                    placeholder="Email"
+                    value={loginEmail}
+                    onChange={(e) => {
+                      setLoginEmail(e.target.value);
+                      if (activeTooltipField === 'loginEmail') setActiveTooltipField(null);
+                    }}
+                    onFocus={() => {
+                      if (activeTooltipField === 'loginEmail') setActiveTooltipField(null);
+                    }}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+                {activeTooltipField === 'loginEmail' && (
+                  <div className="sonic-validation-tooltip">
+                    <div className="tooltip-arrow" />
+                    <div className="tooltip-badge">!</div>
+                    <span className="tooltip-text">{tooltipMessage}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="input-field has-toggle">
-                <i><Lock className="w-4.5 h-4.5" /></i>
-                <input
-                  type={showLoginPassword ? 'text' : 'password'}
-                  placeholder="Password"
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                  autoComplete="current-password"
-                  required
-                />
+              <div className="sonic-field-container">
+                <div className={`input-field has-toggle ${activeTooltipField === 'loginPassword' ? 'has-error' : ''}`}>
+                  <i><Lock className="w-4.5 h-4.5" /></i>
+                  <input
+                    ref={loginPasswordRef}
+                    type={showLoginPassword ? 'text' : 'password'}
+                    placeholder="Password"
+                    value={loginPassword}
+                    onChange={(e) => {
+                      setLoginPassword(e.target.value);
+                      if (activeTooltipField === 'loginPassword') setActiveTooltipField(null);
+                    }}
+                    onFocus={() => {
+                      if (activeTooltipField === 'loginPassword') setActiveTooltipField(null);
+                    }}
+                    autoComplete="current-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowLoginPassword(!showLoginPassword)}
+                    className="toggle-password-btn"
+                    title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
+                    aria-label={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
+                  >
+                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {activeTooltipField === 'loginPassword' && (
+                  <div className="sonic-validation-tooltip">
+                    <div className="tooltip-arrow" />
+                    <div className="tooltip-badge">!</div>
+                    <span className="tooltip-text">{tooltipMessage}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Reserved space for Forgot Password link */}
+              <div className="forgot-password-container">
                 <button
                   type="button"
-                  onClick={() => setShowLoginPassword(!showLoginPassword)}
-                  className="toggle-password-btn"
-                  title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
-                  aria-label={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Espaço reservado para futura implementação do fluxo de recuperação de senha
+                  }}
+                  className="forgot-password-link"
                 >
-                  {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  Forgot password?
                 </button>
               </div>
 
@@ -932,58 +1191,112 @@ export default function AuthSwitch({
             </form>
 
             {/* Sign Up Form */}
-            <form className="sign-up-form" onSubmit={handleSignUp}>
+            <form className="sign-up-form" noValidate onSubmit={handleSignUp}>
               <h2 className="title">Sign up</h2>
 
               {regError && (
-                <div className="alert-box alert-error">{regError}</div>
+                <div className="alert-box alert-error">
+                  <div className="alert-badge">!</div>
+                  <span>{regError}</span>
+                </div>
               )}
               {regSuccess && (
-                <div className="alert-box alert-success">{regSuccess}</div>
+                <div className="alert-box alert-success">
+                  <div className="alert-badge">✓</div>
+                  <span>{regSuccess}</span>
+                </div>
               )}
 
-              <div className="input-field">
-                <i><User className="w-4.5 h-4.5" /></i>
-                <input
-                  type="text"
-                  placeholder="Producer / Username"
-                  value={regName}
-                  onChange={(e) => setRegName(e.target.value)}
-                  required
-                />
+              <div className="sonic-field-container">
+                <div className={`input-field ${activeTooltipField === 'regName' ? 'has-error' : ''}`}>
+                  <i><User className="w-4.5 h-4.5" /></i>
+                  <input
+                    ref={regNameRef}
+                    type="text"
+                    placeholder="Producer / Username"
+                    value={regName}
+                    onChange={(e) => {
+                      setRegName(e.target.value);
+                      if (activeTooltipField === 'regName') setActiveTooltipField(null);
+                    }}
+                    onFocus={() => {
+                      if (activeTooltipField === 'regName') setActiveTooltipField(null);
+                    }}
+                    required
+                  />
+                </div>
+                {activeTooltipField === 'regName' && (
+                  <div className="sonic-validation-tooltip">
+                    <div className="tooltip-arrow" />
+                    <div className="tooltip-badge">!</div>
+                    <span className="tooltip-text">{tooltipMessage}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="input-field">
-                <i><Mail className="w-4.5 h-4.5" /></i>
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={regEmail}
-                  onChange={(e) => setRegEmail(e.target.value)}
-                  autoComplete="email"
-                  required
-                />
+              <div className="sonic-field-container">
+                <div className={`input-field ${activeTooltipField === 'regEmail' ? 'has-error' : ''}`}>
+                  <i><Mail className="w-4.5 h-4.5" /></i>
+                  <input
+                    ref={regEmailRef}
+                    type="email"
+                    placeholder="Email"
+                    value={regEmail}
+                    onChange={(e) => {
+                      setRegEmail(e.target.value);
+                      if (activeTooltipField === 'regEmail') setActiveTooltipField(null);
+                    }}
+                    onFocus={() => {
+                      if (activeTooltipField === 'regEmail') setActiveTooltipField(null);
+                    }}
+                    autoComplete="email"
+                    required
+                  />
+                </div>
+                {activeTooltipField === 'regEmail' && (
+                  <div className="sonic-validation-tooltip">
+                    <div className="tooltip-arrow" />
+                    <div className="tooltip-badge">!</div>
+                    <span className="tooltip-text">{tooltipMessage}</span>
+                  </div>
+                )}
               </div>
 
-              <div className="input-field has-toggle">
-                <i><Lock className="w-4.5 h-4.5" /></i>
-                <input
-                  type={showRegPassword ? 'text' : 'password'}
-                  placeholder="Password"
-                  value={regPassword}
-                  onChange={(e) => setRegPassword(e.target.value)}
-                  autoComplete="new-password"
-                  required
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowRegPassword(!showRegPassword)}
-                  className="toggle-password-btn"
-                  title={showRegPassword ? 'Ocultar senha' : 'Ver senha'}
-                  aria-label={showRegPassword ? 'Ocultar senha' : 'Ver senha'}
-                >
-                  {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
+              <div className="sonic-field-container">
+                <div className={`input-field has-toggle ${activeTooltipField === 'regPassword' ? 'has-error' : ''}`}>
+                  <i><Lock className="w-4.5 h-4.5" /></i>
+                  <input
+                    ref={regPasswordRef}
+                    type={showRegPassword ? 'text' : 'password'}
+                    placeholder="Password"
+                    value={regPassword}
+                    onChange={(e) => {
+                      setRegPassword(e.target.value);
+                      if (activeTooltipField === 'regPassword') setActiveTooltipField(null);
+                    }}
+                    onFocus={() => {
+                      if (activeTooltipField === 'regPassword') setActiveTooltipField(null);
+                    }}
+                    autoComplete="new-password"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowRegPassword(!showRegPassword)}
+                    className="toggle-password-btn"
+                    title={showRegPassword ? 'Ocultar senha' : 'Ver senha'}
+                    aria-label={showRegPassword ? 'Ocultar senha' : 'Ver senha'}
+                  >
+                    {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                {activeTooltipField === 'regPassword' && (
+                  <div className="sonic-validation-tooltip">
+                    <div className="tooltip-arrow" />
+                    <div className="tooltip-badge">!</div>
+                    <span className="tooltip-text">{tooltipMessage}</span>
+                  </div>
+                )}
               </div>
 
               <input

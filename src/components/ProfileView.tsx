@@ -1,8 +1,7 @@
 import { Kit, UserProfile } from '../types';
-import { Download, Edit3, Save, CheckCircle, Sliders, ExternalLink, Settings, ShieldCheck, Mail, Upload, Sun, Moon } from 'lucide-react';
+import { Download, Edit3, Save, CheckCircle, Sliders, ExternalLink, ShieldCheck, Mail, Upload, Sun, Moon } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
-import { getBackendBaseUrl } from '../utils/authService';
 
 interface ProfileViewProps {
   profile: UserProfile;
@@ -29,7 +28,6 @@ export default function ProfileView({
   // Profile editing mode states
   const [isEditing, setIsEditing] = useState(false);
   const [username, setUsername] = useState(profile.name);
-  const [role, setRole] = useState(profile.role);
   const [location, setLocation] = useState(profile.location);
   const [bio, setBio] = useState(profile.bio);
   const [avatar, setAvatar] = useState(profile.avatar);
@@ -48,7 +46,6 @@ export default function ProfileView({
 
   const startEditing = () => {
     setUsername(profile.name);
-    setRole(profile.role);
     setLocation(profile.location);
     setBio(profile.bio);
     setAvatar(profile.avatar);
@@ -57,7 +54,6 @@ export default function ProfileView({
 
   const cancelEditing = () => {
     setUsername(profile.name);
-    setRole(profile.role);
     setLocation(profile.location);
     setBio(profile.bio);
     setAvatar(profile.avatar);
@@ -117,9 +113,13 @@ export default function ProfileView({
 
   const handleUpdate = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!username.trim()) {
+      onShowNotification('Preencha o campo de nome de exibição.');
+      return;
+    }
     onUpdateProfile({
       name: username.toUpperCase().replace(/\s+/g, '_'),
-      role: role.toUpperCase(),
+      role: profile.role,
       location: location.toUpperCase(),
       bio: bio,
       avatar: avatar
@@ -203,7 +203,7 @@ export default function ProfileView({
         {/* Info detail block */}
         <div className="flex-grow flex flex-col gap-4 w-full">
           {isEditing ? (
-            <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <form onSubmit={handleUpdate} noValidate className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <label className="block font-mono text-[9px] text-neutral-400 uppercase font-bold">New Display Name</label>
                 <input
@@ -215,15 +215,6 @@ export default function ProfileView({
                 />
               </div>
               <div className="space-y-1">
-                <label className="block font-mono text-[9px] text-neutral-400 uppercase font-bold">Profession/Role</label>
-                <input
-                  type="text"
-                  value={role}
-                  onChange={(e) => setRole(e.target.value)}
-                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
-                />
-              </div>
-              <div className="space-y-1">
                 <label className="block font-mono text-[9px] text-neutral-400 uppercase font-bold">Location</label>
                 <input
                   type="text"
@@ -231,71 +222,6 @@ export default function ProfileView({
                   onChange={(e) => setLocation(e.target.value)}
                   className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
                 />
-              </div>
-              
-              {/* Profile Photo Direct Link Input */}
-              <div className="space-y-1">
-                <label className="block font-mono text-[9px] text-neutral-400 uppercase font-bold">Profile Photo URL</label>
-                <input
-                  type="url"
-                  placeholder="https://images.unsplash.com/..."
-                  value={avatar}
-                  onChange={(e) => setAvatar(e.target.value)}
-                  className="w-full bg-neutral-50 dark:bg-neutral-950 border border-neutral-300 dark:border-neutral-700 text-neutral-900 dark:text-neutral-100 p-2 font-mono text-xs focus:ring-0 focus:border-black dark:focus:border-white outline-none"
-                />
-              </div>
-
-              {/* Preset Avatar Selection Grid */}
-              <div className="space-y-1.5 md:col-span-2 border-t border-neutral-100 dark:border-neutral-800 pt-3">
-                <span className="block font-mono text-[9px] text-neutral-400 uppercase font-bold">
-                  Quick-Select Conceptual Presets
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {[
-                    {
-                      name: 'D_DEFAULT',
-                      url: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAExWU-khnM2AizPlFsS50YOrhmiZmqRxGD1TjSh96cDG3AMOFG9A56e6gjJ8oDIMcDGpdF7oXSwXQsHWT6KhBary0LxB6wPQJ4v9KvOR-1YUOvOgz85oD7xBBl_A1s4O26gdxR62ZdoD9Srt8ADtBCNWdEq8VDik5sEBfUCFBTYvVK-bnGXPt5f0Sw8WcIH13UpvkjTRKbMGAnIfIR6UqzLPeCVzHJKbN_aqtzd01e6i7nsqDIDyWigdGkU9tFdFHiVVIfTPKaNRR3'
-                    },
-                    {
-                      name: 'B_KNOB',
-                      url: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?q=80&w=300&auto=format&fit=crop'
-                    },
-                    {
-                      name: 'A_KEYS',
-                      url: 'https://images.unsplash.com/photo-1550985543-f47f38aeee65?q=80&w=300&auto=format&fit=crop'
-                    },
-                    {
-                      name: 'T_REEL',
-                      url: 'https://images.unsplash.com/photo-1516280440614-37939bbacd6a?q=80&w=300&auto=format&fit=crop'
-                    },
-                    {
-                      name: 'EQUALIZER',
-                      url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?q=80&w=300&auto=format&fit=crop'
-                    }
-                  ].map((preset) => (
-                    <button
-                      key={preset.name}
-                      type="button"
-                      onClick={() => {
-                        setAvatar(preset.url);
-                        onShowNotification(`Selected ${preset.name} avatar preset.`);
-                      }}
-                      className={`flex items-center gap-1.5 border px-2.5 py-1 font-mono text-[9px] uppercase font-bold tracking-wider cursor-pointer transition-all ${
-                        avatar === preset.url
-                          ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-sm'
-                          : 'bg-neutral-50 dark:bg-neutral-800 text-neutral-600 dark:text-neutral-300 border-neutral-200 dark:border-neutral-700 hover:border-neutral-400 dark:hover:border-neutral-500'
-                      }`}
-                    >
-                      <img
-                        src={preset.url}
-                        alt=""
-                        className="w-3.5 h-3.5 object-cover rounded-full grayscale shrink-0"
-                        referrerPolicy="no-referrer"
-                      />
-                      {preset.name}
-                    </button>
-                  ))}
-                </div>
               </div>
 
               <div className="space-y-1 md:col-span-2">
@@ -654,28 +580,6 @@ export default function ProfileView({
               <p className="font-sans text-[11px] text-neutral-400 mt-1">
                 Conversions will default to daily sandbox index exchange rates during payout checks.
               </p>
-            </div>
-
-            {/* Simulated Workspace API parameters */}
-            <div className="border-t border-neutral-100 dark:border-neutral-800 pt-6 space-y-2.5">
-              <h4 className="font-mono text-xs font-bold text-primary uppercase tracking-widest flex items-center gap-1.5">
-                <Settings className="w-4 h-4" />
-                API Keys & Sandbox telemetry
-              </h4>
-              <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                Connect your external instruments or synthesizers utilizing our modular webhook interfaces. Your security key is securely masked.
-              </p>
-              <div className="bg-neutral-50 dark:bg-neutral-950 border border-neutral-200 dark:border-neutral-800 p-3 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 space-y-1">
-                <div>WORKSPACE_ID: aistudio_sandbox_96865850</div>
-                <div>BACKEND_TARGET: <span className="text-primary font-bold">{getBackendBaseUrl()}</span></div>
-                {profile.token ? (
-                  <div>JWT_TOKEN: <span className="text-emerald-500 font-bold font-mono">{profile.token.slice(0, 18)}... (Ativo)</span></div>
-                ) : (
-                  <div>JWT_TOKEN: <span className="text-neutral-400">Nenhum token ativo</span></div>
-                )}
-                <div>SERVER_STATUS: <span className="text-emerald-500 font-extrabold uppercase">● active</span></div>
-                <div>THEME_PERSISTENCE: <span className="text-primary font-bold uppercase">localStorage ({theme})</span></div>
-              </div>
             </div>
           </div>
         )}

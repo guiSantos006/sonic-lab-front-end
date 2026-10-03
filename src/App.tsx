@@ -297,9 +297,9 @@ export default function App() {
               initial={{ opacity: 0, y: -24 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -16 }}
-              className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-black text-white px-5 py-3 border border-neutral-700 font-mono text-xs flex items-center gap-3 shadow-lg rounded-none max-w-md w-11/12 sm:w-auto"
+              className="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-[#1e222b] text-white px-5 py-3 border border-white/20 font-mono text-xs flex items-center gap-3 shadow-2xl rounded-none max-w-md w-11/12 sm:w-auto"
             >
-              <div className="w-2 h-2 rounded-full bg-emerald-400 animate-ping shrink-0" />
+              <div className="w-2 h-2 rounded-full bg-white animate-ping shrink-0" />
               <div className="flex-grow leading-tight">{notification}</div>
               <button
                 onClick={() => setNotification(null)}
