@@ -85,14 +85,14 @@ export default function Navbar({
             <button
               id="nav-link-sell"
               onClick={() => handleNavClick('sell')}
-              className={`transition-colors py-1 cursor-pointer select-none flex items-center gap-1 ${
+              className={`transition-colors py-1 px-2.5 font-bold cursor-pointer select-none flex items-center gap-1.5 border ${
                 currentView === 'sell'
-                  ? 'text-primary font-bold border-b border-primary'
-                  : 'text-neutral-500 hover:text-primary'
+                  ? 'border-primary bg-primary/10 text-primary'
+                  : 'border-outline-variant/80 hover:border-primary text-neutral-700 dark:text-neutral-200 hover:text-primary'
               }`}
             >
-              <span>Vender</span>
-              <ArrowUpRight className="w-3 h-3 opacity-60" />
+              <span>+ Publicar Kit</span>
+              <ArrowUpRight className="w-3 h-3 opacity-70" />
             </button>
           </nav>
         </div>
@@ -193,9 +193,11 @@ export default function Navbar({
           </button>
           <button
             onClick={() => handleNavClick('sell')}
-            className="w-full text-left py-2 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
+            className="w-full text-left py-2 font-bold text-neutral-800 dark:text-neutral-100 hover:text-primary flex items-center justify-between"
           >
-            <span>Vender Som / Criador</span>
+            <span className="flex items-center gap-1.5 text-primary">
+              <span>+ Publicar SoundKit</span>
+            </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400" />
           </button>
           {isLoggedIn ? (

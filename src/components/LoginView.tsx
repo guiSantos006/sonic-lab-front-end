@@ -12,6 +12,8 @@ interface LoginViewProps {
   initialEmail?: string;
   initialSuccessMessage?: string | null;
   isModal?: boolean;
+  initialMode?: 'login' | 'register' | 'forgot-password' | 'reset-password';
+  initialResetToken?: string | null;
 }
 
 export default function LoginView({
@@ -24,10 +26,12 @@ export default function LoginView({
   initialEmail = '',
   initialSuccessMessage = null,
   isModal = false,
+  initialMode = 'login',
+  initialResetToken = null,
 }: LoginViewProps) {
   return (
     <AuthSwitch
-      initialIsSignUp={false}
+      initialIsSignUp={initialMode === 'register'}
       onLoginSuccess={onLoginSuccess}
       onNavigate={onNavigate}
       onClose={onClose}
@@ -37,6 +41,8 @@ export default function LoginView({
       initialEmail={initialEmail}
       initialSuccessMessage={initialSuccessMessage}
       isModal={isModal}
+      initialMode={initialMode}
+      initialResetToken={initialResetToken}
     />
   );
 }

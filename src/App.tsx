@@ -11,12 +11,15 @@ import { Sparkles, Terminal, X, CheckCircle, Info } from 'lucide-react';
 import { INITIAL_KITS, DEFAULT_PROFILE, PURCHASED_KITS_MOCK } from './data';
 import { Kit, UserProfile, ViewType } from './types';
 import { clearAuthToken } from './utils/authService';
+import { apiSearchSoundKits, apiGetMySoundKits, soundKitResponseToKit } from './utils/soundKitService';
 
 // Shared Components
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import SonarGrid from './components/SonarGrid';
 import { CartModal, InfoModal } from './components/Modals';
+import GlobalAudioPlayer from './components/GlobalAudioPlayer';
+import { audioPlayer } from './utils/audioPlayer';
 
 // Page Views
 import HomeView from './components/HomeView';
@@ -36,7 +39,26 @@ export default function App() {
 
   // Floating Auth Modal State
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [authModalMode, setAuthModalMode] = useState<'login' | 'register'>('login');
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot-password' | 'reset-password'>('login');
+  const [activeResetToken, setActiveResetToken] = useState<string | null>(null);
+
+  // Sync kits with backend API on mount
+  useEffect(() => {
+    apiSearchSoundKits({ page: 0, size: 20 })
+      .then((res) => {
+        if (res && res.content && res.content.length > 0) {
+          const backendKits = res.content.map(soundKitResponseToKit);
+          setKits((prev) => {
+            const existingIds = new Set(prev.map((k) => k.id));
+            const newKits = backendKits.filter((bk) => !existingIds.has(bk.id));
+            return [...newKits, ...prev];
+          });
+        }
+      })
+      .catch(() => {
+        // Fallback to local state
+      });
+  }, []);
 
   // Authentication State
   const [isLoggedIn, setIsLoggedIn] = useState<boolean>(() => {
@@ -54,6 +76,24 @@ export default function App() {
     const saved = localStorage.getItem('sonic_lab_kits');
     return saved ? JSON.parse(saved) : INITIAL_KITS;
   });
+
+  // Sync producer's kits from Spring Boot backend when logged in
+  useEffect(() => {
+    if (isLoggedIn) {
+      apiGetMySoundKits(0, 50)
+        .then((res) => {
+          if (res && res.content && res.content.length > 0) {
+            const myKits = res.content.map(soundKitResponseToKit);
+            setKits((prev) => {
+              const existingIds = new Set(prev.map((k) => k.id));
+              const newKits = myKits.filter((bk) => !existingIds.has(bk.id));
+              return [...newKits, ...prev];
+            });
+          }
+        })
+        .catch(() => {});
+    }
+  }, [isLoggedIn]);
 
   // User Profile
   const [profile, setProfile] = useState<UserProfile>(() => {
@@ -93,6 +133,82 @@ export default function App() {
   
   // Custom toast notification system
   const [notification, setNotification] = useState<string | null>(null);
+
+  // Module 4: Global Audio Player & Waveform State
+  const [activeAudioKit, setActiveAudioKit] = useState<Kit | null>(null);
+  const [isAudioPlaying, setIsAudioPlaying] = useState<boolean>(false);
+
+  // Sync with audioPlayer events
+  useEffect(() => {
+    const unsubPlay = audioPlayer.on('play', () => {
+      const playingId = audioPlayer.getPlayingKitId();
+      if (playingId) {
+        const found = kits.find((k) => k.id === playingId);
+        if (found) {
+          setActiveAudioKit(found);
+        }
+      }
+      setIsAudioPlaying(true);
+    });
+
+    const unsubPause = audioPlayer.on('pause', () => {
+      setIsAudioPlaying(false);
+    });
+
+    const unsubStop = audioPlayer.on('stop', () => {
+      setIsAudioPlaying(false);
+    });
+
+    const unsubEnd = audioPlayer.on('ended', () => {
+      setIsAudioPlaying(false);
+    });
+
+    return () => {
+      unsubPlay();
+      unsubPause();
+      unsubStop();
+      unsubEnd();
+    };
+  }, [kits]);
+
+  // Spacebar play/pause shortcut
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.code === 'Space') {
+        const target = e.target as HTMLElement;
+        const isInput =
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable);
+        if (!isInput && activeAudioKit) {
+          e.preventDefault();
+          if (isAudioPlaying) {
+            audioPlayer.pause();
+          } else {
+            audioPlayer.playKit(activeAudioKit);
+          }
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeAudioKit, isAudioPlaying]);
+
+  const handleToggleGlobalAudio = (kit: Kit) => {
+    if (activeAudioKit?.id === kit.id && isAudioPlaying) {
+      audioPlayer.pause();
+    } else {
+      setActiveAudioKit(kit);
+      audioPlayer.playKit(kit);
+    }
+  };
+
+  const handleCloseGlobalPlayer = () => {
+    audioPlayer.stop();
+    setActiveAudioKit(null);
+  };
 
   // Clear obsolete mock profiles if present
   useEffect(() => {
@@ -221,6 +337,12 @@ export default function App() {
     triggerNotification(`MARCA REGISTRADA: Published "${newKit.title}" securely to active seller catalog.`);
   };
 
+  // Delete / deactivate custom sound kit
+  const handleDeleteKit = (kitId: string) => {
+    setKits((prev) => prev.filter((k) => k.id !== kitId));
+    triggerNotification('SoundKit removido com sucesso da listagem.');
+  };
+
   // Navigation controller with visual screen refocusing
   const handleNavigate = (view: ViewType) => {
     if (view === 'login' || view === 'register') {
@@ -289,7 +411,12 @@ export default function App() {
       </div>
 
       {/* Main Site Container */}
-      <div id="main-app-content" className="relative z-10 flex flex-col flex-grow min-h-screen">
+      <div
+        id="main-app-content"
+        className={`relative z-10 flex flex-col flex-grow min-h-screen transition-all duration-300 ${
+          activeAudioKit ? 'pb-24 md:pb-28' : ''
+        }`}
+      >
         {/* Toast Notification Alert */}
         <AnimatePresence>
           {notification && (
@@ -362,6 +489,7 @@ export default function App() {
                   onPublish={handlePublishNewKit}
                   onNavigate={handleNavigate}
                   creatorName={profile.name}
+                  isLoggedIn={isLoggedIn}
                 />
               )}
 
@@ -383,6 +511,7 @@ export default function App() {
                   onUpdateProfile={(updated) => setProfile(updated)}
                   onSelectKit={handleSelectKitDetails}
                   onShowNotification={triggerNotification}
+                  onDeleteKit={handleDeleteKit}
                 />
               )}
             </motion.div>
@@ -422,7 +551,7 @@ export default function App() {
                 transition={{ duration: 0.22, ease: 'easeOut' }}
                 className="relative z-10 w-full max-w-[900px] my-auto"
               >
-                {authModalMode === 'login' ? (
+                {authModalMode !== 'register' ? (
                   <LoginView
                     onLoginSuccess={handleLoginSuccess}
                     onNavigate={(view) => {
@@ -433,13 +562,18 @@ export default function App() {
                         handleNavigate(view);
                       }
                     }}
-                    onClose={() => setIsAuthModalOpen(false)}
+                    onClose={() => {
+                      setIsAuthModalOpen(false);
+                      setActiveResetToken(null);
+                    }}
                     currentProfile={profile}
                     isAlreadyLoggedIn={isLoggedIn}
                     onLogout={handleLogout}
                     initialEmail={registeredEmail}
                     initialSuccessMessage={loginSuccessNotice}
                     isModal={true}
+                    initialMode={authModalMode}
+                    initialResetToken={activeResetToken}
                   />
                 ) : (
                   <RegisterView
@@ -452,7 +586,10 @@ export default function App() {
                         handleNavigate(view);
                       }
                     }}
-                    onClose={() => setIsAuthModalOpen(false)}
+                    onClose={() => {
+                      setIsAuthModalOpen(false);
+                      setActiveResetToken(null);
+                    }}
                     onLoginSuccess={handleLoginSuccess}
                     isModal={true}
                   />
@@ -480,6 +617,16 @@ export default function App() {
         onClose={() => setInfoTopic(null)}
       />
 
+      {/* Module 4: Sticky Global Audio Player Dock */}
+      <GlobalAudioPlayer
+        activeKit={activeAudioKit}
+        isPlaying={isAudioPlaying}
+        onTogglePlay={handleToggleGlobalAudio}
+        onClose={handleCloseGlobalPlayer}
+        onViewDetails={handleSelectKitDetails}
+        onAddToCart={handleAddToCart}
+        isKitInCart={activeAudioKit ? cart.some((c) => c.id === activeAudioKit.id) : false}
+      />
     </div>
   );
 }

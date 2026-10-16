@@ -1,14 +1,18 @@
 import React, { useState, useEffect, FormEvent, useRef } from 'react';
-import { ChevronLeft, ArrowRight, User as UserIcon, User, Mail, Lock, X, Eye, EyeOff } from 'lucide-react';
+import { ChevronLeft, ArrowRight, User as UserIcon, User, Mail, Lock, X, Eye, EyeOff, KeyRound, ArrowLeft } from 'lucide-react';
 import { UserProfile, ViewType } from '../types';
 import {
   apiLogin,
   apiRegister,
+  apiForgotPassword,
+  apiResetPassword,
   validatePassword,
   parseJwtPayload,
 } from '../utils/authService';
 import { useTheme } from '../context/ThemeContext';
 import ThemeToggle from './ThemeToggle';
+
+export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password';
 
 interface AuthSwitchProps {
   initialIsSignUp?: boolean;
@@ -22,6 +26,8 @@ interface AuthSwitchProps {
   initialEmail?: string;
   initialSuccessMessage?: string | null;
   isModal?: boolean;
+  initialMode?: AuthMode;
+  initialResetToken?: string | null;
 }
 
 export default function AuthSwitch({
@@ -36,9 +42,22 @@ export default function AuthSwitch({
   initialEmail = '',
   initialSuccessMessage = null,
   isModal = false,
+  initialMode,
+  initialResetToken = null,
 }: AuthSwitchProps) {
   const { isDark } = useTheme();
-  const [isSignUp, setIsSignUp] = useState(initialIsSignUp);
+
+  // Active Auth view mode
+  const [authMode, setAuthMode] = useState<AuthMode>(() => {
+    if (initialMode) return initialMode;
+    return initialIsSignUp ? 'register' : 'login';
+  });
+
+  const [isSignUp, setIsSignUp] = useState(authMode === 'register');
+
+  useEffect(() => {
+    setIsSignUp(authMode === 'register');
+  }, [authMode]);
 
   // Field input refs for focus and custom validation positioning
   const loginEmailRef = useRef<HTMLInputElement>(null);
@@ -46,6 +65,10 @@ export default function AuthSwitch({
   const regNameRef = useRef<HTMLInputElement>(null);
   const regEmailRef = useRef<HTMLInputElement>(null);
   const regPasswordRef = useRef<HTMLInputElement>(null);
+  const forgotEmailRef = useRef<HTMLInputElement>(null);
+  const resetTokenRef = useRef<HTMLInputElement>(null);
+  const resetPasswordRef = useRef<HTMLInputElement>(null);
+  const confirmPasswordRef = useRef<HTMLInputElement>(null);
 
   // Custom stylish validation tooltip state
   const [activeTooltipField, setActiveTooltipField] = useState<string | null>(null);
@@ -80,13 +103,31 @@ export default function AuthSwitch({
   const [regError, setRegError] = useState<string | null>(null);
   const [regSuccess, setRegSuccess] = useState<string | null>(null);
 
-  // Reset tooltips when switching sign-in / sign-up mode
+  // Forgot Password state
+  const [forgotEmail, setForgotEmail] = useState(initialEmail);
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+
+  // Reset Password state
+  const [resetToken, setResetToken] = useState(initialResetToken || '');
+  const [resetPassword, setResetPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [resetLoading, setResetLoading] = useState(false);
+  const [resetError, setResetError] = useState<string | null>(null);
+  const [resetSuccess, setResetSuccess] = useState<string | null>(null);
+
+  // Reset tooltips when switching view modes
   useEffect(() => {
     setActiveTooltipField(null);
     setTooltipMessage('');
     setLoginError(null);
     setRegError(null);
-  }, [isSignUp]);
+    setForgotError(null);
+    setResetError(null);
+  }, [authMode, isSignUp]);
 
   // Close on Escape key
   useEffect(() => {
@@ -99,6 +140,94 @@ export default function AuthSwitch({
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [onClose]);
+
+  // Handle Forgot Password Submit (POST to /auth/forgot-password)
+  const handleForgotPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setForgotError(null);
+    setForgotSuccess(null);
+    setActiveTooltipField(null);
+
+    if (!forgotEmail.trim()) {
+      triggerValidationError('forgotEmail', 'Preencha este campo.', forgotEmailRef);
+      return;
+    }
+    if (!forgotEmail.includes('@')) {
+      triggerValidationError('forgotEmail', 'Insira um endereço de e-mail válido.', forgotEmailRef);
+      return;
+    }
+
+    setForgotLoading(true);
+    try {
+      const responseMsg = await apiForgotPassword({ email: forgotEmail.trim() });
+      setForgotSuccess(
+        responseMsg ||
+          'E-mail de recuperação enviado com sucesso! Verifique sua caixa de entrada no Mailtrap.'
+      );
+    } catch (err: unknown) {
+      setForgotError(
+        err instanceof Error ? err.message : 'Falha ao solicitar recuperação de senha.'
+      );
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  // Handle Reset Password Submit (POST to /auth/reset-password)
+  const handleResetPassword = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setResetError(null);
+    setResetSuccess(null);
+    setActiveTooltipField(null);
+
+    if (!resetToken.trim()) {
+      triggerValidationError('resetToken', 'Insira o token de recuperação.', resetTokenRef);
+      return;
+    }
+    if (!resetPassword) {
+      triggerValidationError('resetPassword', 'Preencha a nova senha.', resetPasswordRef);
+      return;
+    }
+    const passCheck = validatePassword(resetPassword);
+    if (!passCheck.valid) {
+      triggerValidationError(
+        'resetPassword',
+        passCheck.message || 'Mínimo de 8 caracteres (letras e números).',
+        resetPasswordRef
+      );
+      return;
+    }
+    if (resetPassword !== confirmPassword) {
+      triggerValidationError('confirmPassword', 'As senhas não coincidem.', confirmPasswordRef);
+      return;
+    }
+
+    setResetLoading(true);
+    try {
+      const responseMsg = await apiResetPassword({
+        token: resetToken.trim(),
+        newPassword: resetPassword,
+      });
+      setResetSuccess(responseMsg || 'Senha redefinida com sucesso!');
+
+      try {
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch {
+        // ignore
+      }
+
+      setTimeout(() => {
+        setResetLoading(false);
+        setLoginSuccess('Senha redefinida com sucesso! Faça login com sua nova senha.');
+        setAuthMode('login');
+      }, 1500);
+    } catch (err: unknown) {
+      setResetLoading(false);
+      setResetError(
+        err instanceof Error ? err.message : 'Falha ao redefinir a senha. Token inválido ou expirado.'
+      );
+    }
+  };
 
   // Handle Sign In Submit (POST to /auth/login)
   const handleSignIn = async (e: FormEvent<HTMLFormElement>) => {
@@ -1077,114 +1206,343 @@ export default function AuthSwitch({
         {/* Formulários de Autenticação */}
         <div className="forms-container">
           <div className="signin-signup">
-            {/* Sign In Form */}
-            <form className="sign-in-form" noValidate onSubmit={handleSignIn}>
-              <h2 className="title">Sign in</h2>
-
-              {loginError && (
-                <div className="alert-box alert-error">
-                  <div className="alert-badge">!</div>
-                  <span>{loginError}</span>
-                </div>
-              )}
-              {loginSuccess && (
-                <div className="alert-box alert-success">
-                  <div className="alert-badge">✓</div>
-                  <span>{loginSuccess}</span>
-                </div>
-              )}
-
-              <div className="sonic-field-container">
-                <div className={`input-field ${activeTooltipField === 'loginEmail' ? 'has-error' : ''}`}>
-                  <i><Mail className="w-4.5 h-4.5" /></i>
-                  <input
-                    ref={loginEmailRef}
-                    type="email"
-                    placeholder="Email"
-                    value={loginEmail}
-                    onChange={(e) => {
-                      setLoginEmail(e.target.value);
-                      if (activeTooltipField === 'loginEmail') setActiveTooltipField(null);
-                    }}
-                    onFocus={() => {
-                      if (activeTooltipField === 'loginEmail') setActiveTooltipField(null);
-                    }}
-                    autoComplete="email"
-                    required
-                  />
-                </div>
-                {activeTooltipField === 'loginEmail' && (
-                  <div className="sonic-validation-tooltip">
-                    <div className="tooltip-arrow" />
-                    <div className="tooltip-badge">!</div>
-                    <span className="tooltip-text">{tooltipMessage}</span>
-                  </div>
-                )}
-              </div>
-
-              <div className="sonic-field-container">
-                <div className={`input-field has-toggle ${activeTooltipField === 'loginPassword' ? 'has-error' : ''}`}>
-                  <i><Lock className="w-4.5 h-4.5" /></i>
-                  <input
-                    ref={loginPasswordRef}
-                    type={showLoginPassword ? 'text' : 'password'}
-                    placeholder="Password"
-                    value={loginPassword}
-                    onChange={(e) => {
-                      setLoginPassword(e.target.value);
-                      if (activeTooltipField === 'loginPassword') setActiveTooltipField(null);
-                    }}
-                    onFocus={() => {
-                      if (activeTooltipField === 'loginPassword') setActiveTooltipField(null);
-                    }}
-                    autoComplete="current-password"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowLoginPassword(!showLoginPassword)}
-                    className="toggle-password-btn"
-                    title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
-                    aria-label={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
-                  >
-                    {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-                {activeTooltipField === 'loginPassword' && (
-                  <div className="sonic-validation-tooltip">
-                    <div className="tooltip-arrow" />
-                    <div className="tooltip-badge">!</div>
-                    <span className="tooltip-text">{tooltipMessage}</span>
-                  </div>
-                )}
-              </div>
-
-              {/* Reserved space for Forgot Password link */}
-              <div className="forgot-password-container">
+            {/* Sign In, Forgot Password, or Reset Password Form */}
+            {authMode === 'forgot-password' ? (
+              <form className="sign-in-form" noValidate onSubmit={handleForgotPassword}>
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Espaço reservado para futura implementação do fluxo de recuperação de senha
+                  onClick={() => {
+                    setAuthMode('login');
+                    setForgotError(null);
+                    setForgotSuccess(null);
                   }}
-                  className="forgot-password-link"
+                  className="mb-3 self-start flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
                 >
-                  Forgot password?
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Voltar ao login</span>
                 </button>
-              </div>
 
-              <input
-                type="submit"
-                value={loginLoading ? 'Autenticando via API...' : 'Login'}
-                className="btn solid"
-                disabled={loginLoading}
-              />
+                <h2 className="title">Recuperação</h2>
+                <p className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 text-center mb-3 max-w-[340px]">
+                  Insira seu e-mail cadastrado para receber as instruções de redefinição via Mailtrap.
+                </p>
 
-              <p className="social-text">Or sign in with Google</p>
-              <div className="social-media">
-                <SocialIcons onSelect={handleSocialAction} isDark={isDark} />
-              </div>
-            </form>
+                {forgotError && (
+                  <div className="alert-box alert-error">
+                    <div className="alert-badge">!</div>
+                    <span>{forgotError}</span>
+                  </div>
+                )}
+                {forgotSuccess && (
+                  <div className="alert-box alert-success">
+                    <div className="alert-badge">✓</div>
+                    <span>{forgotSuccess}</span>
+                  </div>
+                )}
+
+                <div className="sonic-field-container">
+                  <div className={`input-field ${activeTooltipField === 'forgotEmail' ? 'has-error' : ''}`}>
+                    <i><Mail className="w-4.5 h-4.5" /></i>
+                    <input
+                      ref={forgotEmailRef}
+                      type="email"
+                      placeholder="Email cadastrado"
+                      value={forgotEmail}
+                      onChange={(e) => {
+                        setForgotEmail(e.target.value);
+                        if (activeTooltipField === 'forgotEmail') setActiveTooltipField(null);
+                      }}
+                      onFocus={() => {
+                        if (activeTooltipField === 'forgotEmail') setActiveTooltipField(null);
+                      }}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                  {activeTooltipField === 'forgotEmail' && (
+                    <div className="sonic-validation-tooltip">
+                      <div className="tooltip-arrow" />
+                      <div className="tooltip-badge">!</div>
+                      <span className="tooltip-text">{tooltipMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="submit"
+                  value={forgotLoading ? 'Enviando...' : 'Enviar Link'}
+                  className="btn solid"
+                  disabled={forgotLoading}
+                />
+
+                <div className="mt-3 flex items-center justify-center gap-1.5">
+                  <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">Já tem um token?</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAuthMode('reset-password');
+                      setForgotError(null);
+                      setForgotSuccess(null);
+                    }}
+                    className="font-mono text-[11px] underline text-neutral-800 dark:text-neutral-200 hover:text-black dark:hover:text-white cursor-pointer font-bold"
+                  >
+                    Redefinir senha aqui
+                  </button>
+                </div>
+              </form>
+            ) : authMode === 'reset-password' ? (
+              <form className="sign-in-form" noValidate onSubmit={handleResetPassword}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthMode('login');
+                    setResetError(null);
+                    setResetSuccess(null);
+                  }}
+                  className="mb-3 self-start flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  <span>Voltar ao login</span>
+                </button>
+
+                <h2 className="title">Nova Senha</h2>
+                <p className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 text-center mb-3 max-w-[340px]">
+                  Crie uma nova senha de no mínimo 8 caracteres (com letras e números).
+                </p>
+
+                {resetError && (
+                  <div className="alert-box alert-error">
+                    <div className="alert-badge">!</div>
+                    <span>{resetError}</span>
+                  </div>
+                )}
+                {resetSuccess && (
+                  <div className="alert-box alert-success">
+                    <div className="alert-badge">✓</div>
+                    <span>{resetSuccess}</span>
+                  </div>
+                )}
+
+                <div className="sonic-field-container">
+                  <div className={`input-field ${activeTooltipField === 'resetToken' ? 'has-error' : ''}`}>
+                    <i><KeyRound className="w-4.5 h-4.5" /></i>
+                    <input
+                      ref={resetTokenRef}
+                      type="text"
+                      placeholder="Token recebido por e-mail"
+                      value={resetToken}
+                      onChange={(e) => {
+                        setResetToken(e.target.value);
+                        if (activeTooltipField === 'resetToken') setActiveTooltipField(null);
+                      }}
+                      onFocus={() => {
+                        if (activeTooltipField === 'resetToken') setActiveTooltipField(null);
+                      }}
+                      required
+                    />
+                  </div>
+                  {activeTooltipField === 'resetToken' && (
+                    <div className="sonic-validation-tooltip">
+                      <div className="tooltip-arrow" />
+                      <div className="tooltip-badge">!</div>
+                      <span className="tooltip-text">{tooltipMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="sonic-field-container">
+                  <div className={`input-field has-toggle ${activeTooltipField === 'resetPassword' ? 'has-error' : ''}`}>
+                    <i><Lock className="w-4.5 h-4.5" /></i>
+                    <input
+                      ref={resetPasswordRef}
+                      type={showResetPassword ? 'text' : 'password'}
+                      placeholder="Nova senha (mín. 8 caracteres)"
+                      value={resetPassword}
+                      onChange={(e) => {
+                        setResetPassword(e.target.value);
+                        if (activeTooltipField === 'resetPassword') setActiveTooltipField(null);
+                      }}
+                      onFocus={() => {
+                        if (activeTooltipField === 'resetPassword') setActiveTooltipField(null);
+                      }}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowResetPassword(!showResetPassword)}
+                      className="toggle-password-btn"
+                      title={showResetPassword ? 'Ocultar senha' : 'Ver senha'}
+                      aria-label={showResetPassword ? 'Ocultar senha' : 'Ver senha'}
+                    >
+                      {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {activeTooltipField === 'resetPassword' && (
+                    <div className="sonic-validation-tooltip">
+                      <div className="tooltip-arrow" />
+                      <div className="tooltip-badge">!</div>
+                      <span className="tooltip-text">{tooltipMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="sonic-field-container">
+                  <div className={`input-field has-toggle ${activeTooltipField === 'confirmPassword' ? 'has-error' : ''}`}>
+                    <i><Lock className="w-4.5 h-4.5" /></i>
+                    <input
+                      ref={confirmPasswordRef}
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      placeholder="Confirmar nova senha"
+                      value={confirmPassword}
+                      onChange={(e) => {
+                        setConfirmPassword(e.target.value);
+                        if (activeTooltipField === 'confirmPassword') setActiveTooltipField(null);
+                      }}
+                      onFocus={() => {
+                        if (activeTooltipField === 'confirmPassword') setActiveTooltipField(null);
+                      }}
+                      autoComplete="new-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="toggle-password-btn"
+                      title={showConfirmPassword ? 'Ocultar senha' : 'Ver senha'}
+                      aria-label={showConfirmPassword ? 'Ocultar senha' : 'Ver senha'}
+                    >
+                      {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {activeTooltipField === 'confirmPassword' && (
+                    <div className="sonic-validation-tooltip">
+                      <div className="tooltip-arrow" />
+                      <div className="tooltip-badge">!</div>
+                      <span className="tooltip-text">{tooltipMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <input
+                  type="submit"
+                  value={resetLoading ? 'Salvando...' : 'Salvar Nova Senha'}
+                  className="btn solid"
+                  disabled={resetLoading}
+                />
+              </form>
+            ) : (
+              <form className="sign-in-form" noValidate onSubmit={handleSignIn}>
+                <h2 className="title">Sign in</h2>
+
+                {loginError && (
+                  <div className="alert-box alert-error">
+                    <div className="alert-badge">!</div>
+                    <span>{loginError}</span>
+                  </div>
+                )}
+                {loginSuccess && (
+                  <div className="alert-box alert-success">
+                    <div className="alert-badge">✓</div>
+                    <span>{loginSuccess}</span>
+                  </div>
+                )}
+
+                <div className="sonic-field-container">
+                  <div className={`input-field ${activeTooltipField === 'loginEmail' ? 'has-error' : ''}`}>
+                    <i><Mail className="w-4.5 h-4.5" /></i>
+                    <input
+                      ref={loginEmailRef}
+                      type="email"
+                      placeholder="Email"
+                      value={loginEmail}
+                      onChange={(e) => {
+                        setLoginEmail(e.target.value);
+                        if (activeTooltipField === 'loginEmail') setActiveTooltipField(null);
+                      }}
+                      onFocus={() => {
+                        if (activeTooltipField === 'loginEmail') setActiveTooltipField(null);
+                      }}
+                      autoComplete="email"
+                      required
+                    />
+                  </div>
+                  {activeTooltipField === 'loginEmail' && (
+                    <div className="sonic-validation-tooltip">
+                      <div className="tooltip-arrow" />
+                      <div className="tooltip-badge">!</div>
+                      <span className="tooltip-text">{tooltipMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="sonic-field-container">
+                  <div className={`input-field has-toggle ${activeTooltipField === 'loginPassword' ? 'has-error' : ''}`}>
+                    <i><Lock className="w-4.5 h-4.5" /></i>
+                    <input
+                      ref={loginPasswordRef}
+                      type={showLoginPassword ? 'text' : 'password'}
+                      placeholder="Password"
+                      value={loginPassword}
+                      onChange={(e) => {
+                        setLoginPassword(e.target.value);
+                        if (activeTooltipField === 'loginPassword') setActiveTooltipField(null);
+                      }}
+                      onFocus={() => {
+                        if (activeTooltipField === 'loginPassword') setActiveTooltipField(null);
+                      }}
+                      autoComplete="current-password"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowLoginPassword(!showLoginPassword)}
+                      className="toggle-password-btn"
+                      title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
+                      aria-label={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
+                    >
+                      {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {activeTooltipField === 'loginPassword' && (
+                    <div className="sonic-validation-tooltip">
+                      <div className="tooltip-arrow" />
+                      <div className="tooltip-badge">!</div>
+                      <span className="tooltip-text">{tooltipMessage}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Active Forgot Password link */}
+                <div className="forgot-password-container">
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setAuthMode('forgot-password');
+                      setForgotEmail(loginEmail);
+                      setForgotError(null);
+                      setForgotSuccess(null);
+                    }}
+                    className="forgot-password-link"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+
+                <input
+                  type="submit"
+                  value={loginLoading ? 'Autenticando via API...' : 'Login'}
+                  className="btn solid"
+                  disabled={loginLoading}
+                />
+
+                <p className="social-text">Or sign in with Google</p>
+                <div className="social-media">
+                  <SocialIcons onSelect={handleSocialAction} isDark={isDark} />
+                </div>
+              </form>
+            )}
 
             {/* Sign Up Form */}
             <form className="sign-up-form" noValidate onSubmit={handleSignUp}>
@@ -1324,6 +1682,7 @@ export default function AuthSwitch({
                 className="btn transparent"
                 onClick={() => {
                   setRegError(null);
+                  setAuthMode('register');
                   setIsSignUp(true);
                 }}
               >
@@ -1341,6 +1700,7 @@ export default function AuthSwitch({
                 className="btn transparent"
                 onClick={() => {
                   setLoginError(null);
+                  setAuthMode('login');
                   setIsSignUp(false);
                 }}
               >

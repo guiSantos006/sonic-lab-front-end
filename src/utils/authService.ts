@@ -182,6 +182,25 @@ export function parseJwtPayload(token: string): Record<string, unknown> | null {
  * Extracts error details from response data (handles Spring Boot, Express, Django, etc.)
  */
 function extractErrorMessage(data: unknown, status: number, statusText: string): string {
+  if (status === 429) {
+    if (typeof data === 'object' && data !== null && 'message' in data && typeof (data as Record<string, unknown>).message === 'string') {
+      return (data as Record<string, unknown>).message as string;
+    }
+    return 'Limite de requisições excedido. Por favor, aguarde um minuto e tente novamente.';
+  }
+
+  if (status === 409) {
+    return 'Este e-mail já está cadastrado no sistema.';
+  }
+
+  if (status === 401 || status === 403) {
+    if (typeof data === 'object' && data !== null && 'message' in data && typeof (data as Record<string, unknown>).message === 'string') {
+      const msg = (data as Record<string, unknown>).message as string;
+      if (msg.trim()) return msg.trim();
+    }
+    return 'E-mail ou senha incorretos.';
+  }
+
   if (!data) return `Erro do servidor (${status}: ${statusText || 'Falha na requisição'})`;
 
   if (typeof data === 'string' && data.trim()) {

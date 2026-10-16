@@ -1,8 +1,9 @@
 import { Kit } from '../types';
-import { Play, Pause, Search, FilterX, SlidersHorizontal, ArrowUpDown } from 'lucide-react';
+import { Play, Pause, Search, FilterX, SlidersHorizontal, ArrowUpDown, Tag, Sparkles } from 'lucide-react';
 import React, { useState, useMemo, useEffect } from 'react';
 import VinylRecord from './VinylRecord';
 import { audioPlayer } from '../utils/audioPlayer';
+import { apiGetSoundKitTags } from '../utils/soundKitService';
 
 interface CatalogViewProps {
   kits: Kit[];
@@ -19,21 +20,40 @@ export default function CatalogView({
   const [playingId, setPlayingId] = useState<string | null>(null);
 
   useEffect(() => {
+    const unsubPlay = audioPlayer.on('play', () => {
+      setPlayingId(audioPlayer.getPlayingKitId());
+    });
+
+    const unsubPause = audioPlayer.on('pause', () => {
+      if (!audioPlayer.isPlayingNow()) {
+        setPlayingId(null);
+      }
+    });
+
+    const unsubStop = audioPlayer.on('stop', () => {
+      setPlayingId(null);
+    });
+
+    const unsubEnd = audioPlayer.on('ended', () => {
+      setPlayingId(null);
+    });
+
     return () => {
-      audioPlayer.stop();
+      unsubPlay();
+      unsubPause();
+      unsubStop();
+      unsubEnd();
     };
   }, []);
 
   const handlePlayToggle = (e: React.MouseEvent, kit: Kit) => {
     e.stopPropagation();
-    if (playingId === kit.id) {
-      audioPlayer.stop();
+    if (playingId === kit.id && audioPlayer.isPlayingNow()) {
+      audioPlayer.pause();
       setPlayingId(null);
     } else {
       setPlayingId(kit.id);
-      audioPlayer.play(kit.id, kit.bpm || 120, kit.category || 'drum_kit', () => {
-        setPlayingId(null);
-      });
+      audioPlayer.playKit(kit);
     }
   };
 
@@ -53,6 +73,18 @@ export default function CatalogView({
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<'default' | 'priceAsc' | 'priceDesc' | 'title'>('default');
   const [visibleCount, setVisibleCount] = useState(6);
+
+  // Dynamic tags loaded from backend API (GET /soundkits/tags)
+  const [backendTags, setBackendTags] = useState<string[]>([]);
+  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+
+  useEffect(() => {
+    apiGetSoundKitTags()
+      .then((tags) => {
+        if (tags && tags.length > 0) setBackendTags(tags);
+      })
+      .catch(() => {});
+  }, []);
 
   // Toggle handlers
   const handleCategoryToggle = (cat: 'drum_kit' | 'sample_pack' | 'preset_bank') => {
@@ -74,6 +106,7 @@ export default function CatalogView({
     setSearch('');
     setCategories({ drum_kit: true, sample_pack: true, preset_bank: true });
     setStyles({ trap: false, lofi: false, techno: false });
+    setSelectedTag(null);
     setMinPrice('');
     setMaxPrice('');
     setSortBy('default');
@@ -83,6 +116,13 @@ export default function CatalogView({
   const filteredKits = useMemo(() => {
     return kits
       .filter((kit) => {
+        // Tag chip filter from backend
+        if (selectedTag) {
+          if (!kit.tags.some((t) => t.toUpperCase() === selectedTag.toUpperCase())) {
+            return false;
+          }
+        }
+
         // Search filter matching title, creator or tags
         const q = search.toLowerCase();
         if (search) {
@@ -289,6 +329,34 @@ export default function CatalogView({
             <option value="title">Alphabetical</option>
           </select>
         </section>
+
+        {/* Dynamic Tags from Spring Boot Backend (GET /soundkits/tags) */}
+        {backendTags.length > 0 && (
+          <section className="flex flex-col gap-3">
+            <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest pb-1 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
+              <span>Tags da API</span>
+              <span className="text-[9px] text-emerald-500 font-bold">MÓDULO 2</span>
+            </h3>
+            <div className="flex flex-wrap gap-1.5">
+              {backendTags.map((tag) => {
+                const isSelected = selectedTag === tag;
+                return (
+                  <button
+                    key={tag}
+                    onClick={() => setSelectedTag(isSelected ? null : tag)}
+                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider transition-colors cursor-pointer ${
+                      isSelected
+                        ? 'bg-black dark:bg-white text-white dark:text-black border border-transparent'
+                        : 'bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white border border-neutral-200 dark:border-neutral-700'
+                    }`}
+                  >
+                    #{tag}
+                  </button>
+                );
+              })}
+            </div>
+          </section>
+        )}
 
         {/* Reset Filter Button */}
         <button

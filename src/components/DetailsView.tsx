@@ -1,7 +1,8 @@
 import { Kit } from '../types';
 import { Play, Pause, ShoppingCart, CreditCard, ChevronLeft, Volume2, Sparkles, AlertCircle } from 'lucide-react';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import VinylRecord from './VinylRecord';
+import Waveform from './Waveform';
 import { audioPlayer } from '../utils/audioPlayer';
 
 interface DetailsViewProps {
@@ -21,16 +22,78 @@ export default function DetailsView({
 }: DetailsViewProps) {
   // Playback States
   const [isPlaying, setIsPlaying] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [time, setTime] = useState('0:00 / 1:45');
-  const timerRef = useRef<any>(null);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(kit.audioDemo?.durationInSeconds || 30);
 
   useEffect(() => {
+    // Check if this kit is currently playing in global player
+    if (audioPlayer.getPlayingKitId() === kit.id) {
+      setIsPlaying(audioPlayer.isPlayingNow());
+      setCurrentTime(audioPlayer.getCurrentTime());
+      setDuration(audioPlayer.getDuration());
+    }
+
+    const unsubPlay = audioPlayer.on('play', () => {
+      if (audioPlayer.getPlayingKitId() === kit.id) {
+        setIsPlaying(true);
+      } else {
+        setIsPlaying(false);
+      }
+    });
+
+    const unsubPause = audioPlayer.on('pause', () => {
+      if (audioPlayer.getPlayingKitId() === kit.id) {
+        setIsPlaying(false);
+      }
+    });
+
+    const unsubStop = audioPlayer.on('stop', () => {
+      setIsPlaying(false);
+      setCurrentTime(0);
+    });
+
+    const unsubTime = audioPlayer.on('timeupdate', () => {
+      if (audioPlayer.getPlayingKitId() === kit.id) {
+        setCurrentTime(audioPlayer.getCurrentTime());
+        setDuration(audioPlayer.getDuration());
+      }
+    });
+
+    const unsubEnd = audioPlayer.on('ended', () => {
+      if (audioPlayer.getPlayingKitId() === kit.id) {
+        setIsPlaying(false);
+        setCurrentTime(0);
+      }
+    });
+
     return () => {
-      audioPlayer.stop();
-      if (timerRef.current) clearInterval(timerRef.current);
+      unsubPlay();
+      unsubPause();
+      unsubStop();
+      unsubTime();
+      unsubEnd();
     };
-  }, []);
+  }, [kit.id]);
+
+  const handlePlayToggle = () => {
+    if (isPlaying && audioPlayer.getPlayingKitId() === kit.id) {
+      audioPlayer.pause();
+    } else {
+      audioPlayer.playKit(kit);
+    }
+  };
+
+  const handleSeek = (percentage: number) => {
+    if (audioPlayer.getPlayingKitId() !== kit.id) {
+      audioPlayer.playKit(kit).then(() => {
+        audioPlayer.seekPercent(percentage);
+      });
+    } else {
+      audioPlayer.seekPercent(percentage);
+    }
+  };
+
+  const progress = duration > 0 ? currentTime / duration : 0;
 
   // Contents default fallback
   const contents = kit.contents || {
@@ -42,61 +105,12 @@ export default function DetailsView({
     'Atmospheres': 15
   };
 
-  useEffect(() => {
-    if (isPlaying) {
-      timerRef.current = setInterval(() => {
-        setProgress((prev) => {
-          const next = prev + 1.25;
-          if (next >= 100) {
-            setIsPlaying(false);
-            audioPlayer.stop();
-            clearInterval(timerRef.current);
-            return 0;
-          }
-          // Format visual clock
-          const elapsedSecs = Math.floor((next / 100) * 105);
-          const minutes = Math.floor(elapsedSecs / 60);
-          const seconds = elapsedSecs % 60;
-          setTime(`${minutes}:${seconds.toString().padStart(2, '0')} / 1:45`);
-          return next;
-        });
-      }, 150);
-    } else {
-      if (timerRef.current) clearInterval(timerRef.current);
-    }
-
-    return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
-    };
-  }, [isPlaying]);
-
-  const handlePlayToggle = () => {
-    if (isPlaying) {
-      audioPlayer.stop();
-      setIsPlaying(false);
-    } else {
-      setIsPlaying(true);
-      audioPlayer.play(kit.id, kit.bpm || 120, kit.category, () => {
-        setIsPlaying(false);
-        setProgress(0);
-      });
-    }
-  };
-
-  const handleWaveformClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    const clickX = e.clientX - rect.left;
-    const clickPercent = (clickX / rect.width) * 100;
-    setProgress(clickPercent);
-
-    const elapsedSecs = Math.floor((clickPercent / 100) * 105);
-    const minutes = Math.floor(elapsedSecs / 60);
-    const seconds = elapsedSecs % 60;
-    setTime(`${minutes}:${seconds.toString().padStart(2, '0')} / 1:45`);
-
-    if (!isPlaying) {
-      handlePlayToggle();
-    }
+  // Format mm:ss
+  const formatClock = (sec: number) => {
+    if (isNaN(sec) || sec < 0) return '0:00';
+    const m = Math.floor(sec / 60);
+    const s = Math.floor(sec % 60);
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
   return (
@@ -184,22 +198,22 @@ export default function DetailsView({
             </div>
           </div>
 
-          {/* Audio Player */}
+          {/* Audio Player with Interactive Waveform */}
           <div className="border border-black dark:border-neutral-700 p-5 flex flex-col gap-4 bg-white dark:bg-neutral-900/90 shadow-sm">
             <div className="flex justify-between items-center">
               <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-black dark:text-white flex items-center gap-1.5">
                 <Volume2 className="w-3.5 h-3.5" />
-                Demo Preview
+                Demo Preview & Waveform Analysis
               </span>
               <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 font-medium" id="time-display">
-                {time}
+                {formatClock(currentTime)} / {formatClock(duration)}
               </span>
             </div>
 
             <div className="flex items-center gap-4">
               <button
                 onClick={handlePlayToggle}
-                className="w-12 h-12 flex-shrink-0 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 flex items-center justify-center transition-opacity focus:outline-none cursor-pointer rounded-none"
+                className="w-12 h-12 flex-shrink-0 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 flex items-center justify-center transition-opacity focus:outline-none cursor-pointer rounded-none shadow-sm"
                 aria-label={isPlaying ? 'Pause' : 'Play'}
                 id="play-btn"
               >
@@ -210,28 +224,26 @@ export default function DetailsView({
                 )}
               </button>
 
-              {/* Progress Bar Waveform simulation background */}
+              {/* High-Fidelity Waveform Visualizer */}
               <div
-                onClick={handleWaveformClick}
-                className="relative w-full h-10 bg-neutral-100 dark:bg-neutral-800 cursor-pointer overflow-hidden border border-neutral-200 dark:border-neutral-700 flex items-center gap-[3px] px-2"
+                className="relative w-full h-12 bg-neutral-100 dark:bg-neutral-800/80 cursor-pointer overflow-hidden border border-neutral-200 dark:border-neutral-700 flex items-center px-2 py-1"
                 id="waveform-container"
               >
-                {/* Simulated dynamic bars */}
-                {Array.from({ length: 48 }).map((_, idx) => {
-                  const barProgressThresh = (idx / 48) * 100;
-                  const isActive = progress > barProgressThresh;
-                  const randomHeight = [60, 40, 80, 50, 95, 30, 90, 70, 45, 60, 25, 100, 30, 75, 45, 90, 20, 85, 35, 65, 55, 10, 80, 95, 20, 85, 45][idx % 27];
-
-                  return (
-                    <div
-                      key={idx}
-                      style={{ height: `${randomHeight}%` }}
-                      className={`w-[4px] min-w-[2px] transition-all duration-150 ${
-                        isActive ? 'bg-black dark:bg-white' : 'bg-neutral-300 dark:bg-neutral-700'
-                      }`}
-                    />
-                  );
-                })}
+                <Waveform
+                  data={kit.audioDemo?.waveformData}
+                  progress={progress}
+                  currentTime={currentTime}
+                  duration={duration}
+                  isPlaying={isPlaying}
+                  onSeek={handleSeek}
+                  height={40}
+                  barWidth={3}
+                  barGap={2}
+                  barRadius={1.5}
+                  barsCount={64}
+                  showTimeHover={true}
+                  className="w-full"
+                />
               </div>
             </div>
           </div>

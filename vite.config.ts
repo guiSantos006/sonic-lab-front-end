@@ -25,6 +25,21 @@ export default defineConfig(() => {
           changeOrigin: true,
           secure: false,
         },
+        '/soundkits': {
+          target: process.env.VITE_BACKEND_URL || `http://localhost:${process.env.VITE_BACKEND_PORT || '8080'}`,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/uploads': {
+          target: process.env.VITE_BACKEND_URL || `http://localhost:${process.env.VITE_BACKEND_PORT || '8080'}`,
+          changeOrigin: true,
+          secure: false,
+        },
+        '/teste': {
+          target: process.env.VITE_BACKEND_URL || `http://localhost:${process.env.VITE_BACKEND_PORT || '8080'}`,
+          changeOrigin: true,
+          secure: false,
+        },
       },
     },
   };

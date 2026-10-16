@@ -3,6 +3,7 @@ import { Play, Pause, ChevronRight, Volume2, Plus, Headphones } from 'lucide-rea
 import React, { useState, useEffect } from 'react';
 import VinylRecord from './VinylRecord';
 import MorphingText from './MorphingText';
+import Waveform from './Waveform';
 import { audioPlayer } from '../utils/audioPlayer';
 
 interface HomeViewProps {
@@ -18,45 +19,59 @@ export default function HomeView({
   onNavigate,
   onAddToCart
 }: HomeViewProps) {
-  // Simulator state for sample demo preview inside Bento Cards
+  // Sync with global audio player state
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [playProgress, setPlayProgress] = useState<{ [key: string]: number }>({});
 
   useEffect(() => {
-    let interval: any;
-    if (playingId) {
-      interval = setInterval(() => {
-        setPlayProgress((prev) => {
-          const current = prev[playingId] || 0;
-          if (current >= 100) {
-            setPlayingId(null);
-            audioPlayer.stop();
-            return { ...prev, [playingId]: 0 };
-          }
-          return { ...prev, [playingId]: current + 5 };
-        });
-      }, 100);
-    } else {
-      audioPlayer.stop();
-    }
+    const unsubPlay = audioPlayer.on('play', () => {
+      setPlayingId(audioPlayer.getPlayingKitId());
+    });
+
+    const unsubPause = audioPlayer.on('pause', () => {
+      if (!audioPlayer.isPlayingNow()) {
+        setPlayingId(null);
+      }
+    });
+
+    const unsubStop = audioPlayer.on('stop', () => {
+      setPlayingId(null);
+    });
+
+    const unsubTime = audioPlayer.on('timeupdate', () => {
+      const currentId = audioPlayer.getPlayingKitId();
+      if (currentId) {
+        setPlayProgress((prev) => ({
+          ...prev,
+          [currentId]: audioPlayer.getProgress() * 100,
+        }));
+      }
+    });
+
+    const unsubEnd = audioPlayer.on('ended', () => {
+      setPlayingId(null);
+    });
+
     return () => {
-      clearInterval(interval);
-      audioPlayer.stop();
+      unsubPlay();
+      unsubPause();
+      unsubStop();
+      unsubTime();
+      unsubEnd();
     };
-  }, [playingId]);
+  }, []);
 
   const handlePlayDemo = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (playingId === id) {
-      audioPlayer.stop();
+    if (playingId === id && audioPlayer.isPlayingNow()) {
+      audioPlayer.pause();
       setPlayingId(null);
     } else {
       const kit = kits.find((k) => k.id === id);
-      setPlayingId(id);
-      setPlayProgress((prev) => ({ ...prev, [id]: 0 }));
-      audioPlayer.play(id, kit?.bpm || 120, kit?.category || 'drum_kit', () => {
-        setPlayingId(null);
-      });
+      if (kit) {
+        setPlayingId(id);
+        audioPlayer.playKit(kit);
+      }
     }
   };
 
@@ -314,24 +329,28 @@ export default function HomeView({
                       )}
                     </button>
 
-                    {/* Progress Waveform Simulation */}
-                    <div className="flex-1 h-6 flex items-center gap-[2px] overflow-hidden opacity-85">
-                      {[100, 60, 80, 40, 95, 30, 90, 50, 70, 20, 85, 45, 60, 25, 100, 30].map(
-                        (height, index, arr) => {
-                          const barProgressThresh = (index / arr.length) * 100;
-                          const isPlayed = progress > barProgressThresh;
-
-                          return (
-                            <div
-                              key={index}
-                              style={{ height: `${height}%` }}
-                              className={`w-[3px] transition-all duration-300 ${
-                                isPlayed ? 'bg-black dark:bg-white' : 'bg-neutral-200 dark:bg-neutral-800'
-                              }`}
-                            />
-                          );
-                        }
-                      )}
+                    {/* High-Fidelity Waveform Visualizer */}
+                    <div
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex-1 h-7 flex items-center overflow-hidden px-1 bg-neutral-100/50 dark:bg-neutral-800/40 rounded border border-neutral-200/60 dark:border-neutral-700/60"
+                    >
+                      <Waveform
+                        data={item.audioDemo?.waveformData}
+                        progress={(playProgress[item.id] || 0) / 100}
+                        isPlaying={isPlaying}
+                        onSeek={(pct) => {
+                          if (playingId !== item.id) {
+                            setPlayingId(item.id);
+                            audioPlayer.playKit(item);
+                          }
+                          audioPlayer.seekPercent(pct);
+                        }}
+                        height={24}
+                        barWidth={2.5}
+                        barGap={1.5}
+                        barsCount={44}
+                        showTimeHover={false}
+                      />
                     </div>
                   </div>
                 </div>

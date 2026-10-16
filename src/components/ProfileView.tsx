@@ -1,7 +1,8 @@
 import { Kit, UserProfile } from '../types';
-import { Download, Edit3, Save, CheckCircle, Sliders, ExternalLink, ShieldCheck, Mail, Upload, Sun, Moon } from 'lucide-react';
+import { Download, Edit3, Save, CheckCircle, Sliders, ExternalLink, ShieldCheck, Mail, Upload, Sun, Moon, Trash2 } from 'lucide-react';
 import React, { useState, useRef } from 'react';
 import { useTheme } from '../context/ThemeContext';
+import { apiDeleteSoundKit } from '../utils/soundKitService';
 
 interface ProfileViewProps {
   profile: UserProfile;
@@ -10,6 +11,7 @@ interface ProfileViewProps {
   onUpdateProfile: (updated: UserProfile) => void;
   onSelectKit: (id: string) => void;
   onShowNotification: (text: string) => void;
+  onDeleteKit?: (id: string) => void;
 }
 
 export default function ProfileView({
@@ -18,7 +20,8 @@ export default function ProfileView({
   creatorKits,
   onUpdateProfile,
   onSelectKit,
-  onShowNotification
+  onShowNotification,
+  onDeleteKit,
 }: ProfileViewProps) {
   const { theme, setTheme } = useTheme();
 
@@ -440,9 +443,31 @@ export default function ProfileView({
                       <h3 className="font-sans text-xs font-bold truncate group-hover:underline text-black dark:text-white">
                         {item.title}
                       </h3>
-                      <span className="font-mono text-xs font-extrabold text-neutral-800 dark:text-neutral-200 whitespace-nowrap bg-neutral-100 dark:bg-neutral-800 px-1 border border-neutral-200 dark:border-neutral-700">
-                        ${item.price.toFixed(2)}
-                      </span>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <span className="font-mono text-xs font-extrabold text-neutral-800 dark:text-neutral-200 whitespace-nowrap bg-neutral-100 dark:bg-neutral-800 px-1 border border-neutral-200 dark:border-neutral-700">
+                          ${item.price.toFixed(2)}
+                        </span>
+                        {onDeleteKit && (
+                          <button
+                            onClick={async (e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Deseja desativar o SoundKit "${item.title}" no MongoDB?`)) {
+                                try {
+                                  await apiDeleteSoundKit(item.id);
+                                  onDeleteKit(item.id);
+                                  onShowNotification(`SoundKit "${item.title}" desativado com sucesso (DELETE /soundkits/${item.id}).`);
+                                } catch (err: any) {
+                                  onShowNotification(`Erro ao desativar: ${err.message}`);
+                                }
+                              }
+                            }}
+                            className="p-1 text-neutral-400 hover:text-red-500 hover:bg-neutral-100 dark:hover:bg-neutral-800 rounded transition-colors cursor-pointer"
+                            title="Desativar kit (DELETE /soundkits/{id})"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="flex gap-2 items-center">
