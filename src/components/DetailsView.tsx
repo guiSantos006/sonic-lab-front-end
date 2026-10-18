@@ -130,15 +130,15 @@ export default function DetailsView({
       <div className="grid grid-cols-12 gap-8 md:gap-12">
         {/* LEFT: Cover and minimalist vinyl turntable */}
         <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
-          <div className="w-full aspect-square md:aspect-[4/3] lg:aspect-square bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 relative overflow-hidden group flex items-center justify-center p-6">
+          <div className="w-full aspect-square md:aspect-[4/3] lg:aspect-square bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 relative overflow-hidden group flex items-center justify-center p-3 sm:p-6">
             <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10 dark:to-white/[0.02]" />
 
             {/* Minimalist Vinyl Record Turntable */}
             <div
-              className={`relative z-10 transition-all duration-700 ease-out flex items-center justify-center ${
+              className={`relative z-10 transition-all duration-700 ease-out flex items-center justify-center max-w-full overflow-hidden ${
                 isPlaying
-                  ? 'scale-105'
-                  : 'scale-95 group-hover:scale-100 opacity-90 group-hover:opacity-100'
+                  ? 'scale-100 sm:scale-105'
+                  : 'scale-90 sm:scale-95 group-hover:scale-100 opacity-90 group-hover:opacity-100'
               }`}
             >
               <VinylRecord
@@ -152,30 +152,30 @@ export default function DetailsView({
             </div>
 
             {/* Minimalist status badge */}
-            <div className="absolute top-4 left-4 z-20 flex items-center gap-2 font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400 bg-white/70 dark:bg-black/60 px-2.5 py-1 border border-neutral-200 dark:border-white/10 backdrop-blur-sm">
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex items-center gap-2 font-mono text-[9px] sm:text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400 bg-white/70 dark:bg-black/60 px-2 sm:px-2.5 py-1 border border-neutral-200 dark:border-white/10 backdrop-blur-sm">
               <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
               {isPlaying ? '33 RPM PLAYING' : 'VINYL READY'}
             </div>
           </div>
 
           {/* Specs Metas */}
-          <div className="flex flex-wrap gap-2">
-            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
+          <div className="flex flex-wrap gap-1.5 sm:gap-2">
+            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-2.5 sm:px-3.5 py-1 sm:py-1.5 font-mono text-[9px] sm:text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
               {kit.sampleRate || 'WAV 24-BIT'}
             </span>
-            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
+            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-2.5 sm:px-3.5 py-1 sm:py-1.5 font-mono text-[9px] sm:text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
               {kit.royaltyFree ? 'ROYALTY FREE' : 'PERSONAL LICENSE'}
             </span>
-            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
+            <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-2.5 sm:px-3.5 py-1 sm:py-1.5 font-mono text-[9px] sm:text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
               {kit.fileSize || '980 MB'}
             </span>
             {kit.bpm && (
-              <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
+              <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-2.5 sm:px-3.5 py-1 sm:py-1.5 font-mono text-[9px] sm:text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
                 {kit.bpm} BPM
               </span>
             )}
             {kit.key && (
-              <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-3.5 py-1.5 font-mono text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
+              <span className="border border-neutral-200 dark:border-neutral-800 bg-neutral-50 dark:bg-neutral-900 px-2.5 sm:px-3.5 py-1 sm:py-1.5 font-mono text-[9px] sm:text-[10px] text-neutral-600 dark:text-neutral-400 uppercase font-bold tracking-wider">
                 KEY: {kit.key}
               </span>
             )}
@@ -183,50 +183,50 @@ export default function DetailsView({
         </div>
 
         {/* RIGHT: Meta info headers, Simulated player and actions */}
-        <div className="col-span-12 lg:col-span-5 flex flex-col justify-start gap-8 lg:pl-6 lg:border-l lg:border-neutral-200 dark:lg:border-neutral-800">
+        <div className="col-span-12 lg:col-span-5 flex flex-col justify-start gap-6 sm:gap-8 lg:pl-6 lg:border-l lg:border-neutral-200 dark:lg:border-neutral-800">
           
           {/* Header titles */}
           <div>
             <span className="font-mono text-xs text-neutral-400 font-bold uppercase tracking-widest block mb-2">
               BY {kit.creator}
             </span>
-            <h1 className="font-sans text-3xl md:text-4xl font-extrabold text-primary tracking-tighter leading-none mb-4 uppercase">
+            <h1 className="font-sans text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary tracking-tighter leading-tight mb-3 sm:mb-4 uppercase">
               {kit.title}
             </h1>
-            <div className="font-mono text-2xl font-extrabold text-black dark:text-white bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 px-4 py-2 inline-block">
+            <div className="font-mono text-xl sm:text-2xl font-extrabold text-black dark:text-white bg-neutral-50 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-700 px-3.5 sm:px-4 py-1.5 sm:py-2 inline-block">
               ${kit.price.toFixed(2)}
             </div>
           </div>
 
           {/* Audio Player with Interactive Waveform */}
-          <div className="border border-black dark:border-neutral-700 p-5 flex flex-col gap-4 bg-white dark:bg-neutral-900/90 shadow-sm">
+          <div className="border border-black dark:border-neutral-700 p-4 sm:p-5 flex flex-col gap-3 sm:gap-4 bg-white dark:bg-neutral-900/90 shadow-sm">
             <div className="flex justify-between items-center">
-              <span className="font-mono text-[10px] uppercase font-bold tracking-widest text-black dark:text-white flex items-center gap-1.5">
+              <span className="font-mono text-[9px] sm:text-[10px] uppercase font-bold tracking-widest text-black dark:text-white flex items-center gap-1.5">
                 <Volume2 className="w-3.5 h-3.5" />
-                Demo Preview & Waveform Analysis
+                Demo Preview
               </span>
-              <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 font-medium" id="time-display">
+              <span className="font-mono text-[10px] text-neutral-500 dark:text-neutral-400 font-medium tabular-nums" id="time-display">
                 {formatClock(currentTime)} / {formatClock(duration)}
               </span>
             </div>
 
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3 sm:gap-4">
               <button
                 onClick={handlePlayToggle}
-                className="w-12 h-12 flex-shrink-0 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 flex items-center justify-center transition-opacity focus:outline-none cursor-pointer rounded-none shadow-sm"
+                className="w-11 h-11 sm:w-12 sm:h-12 flex-shrink-0 bg-black dark:bg-white text-white dark:text-black hover:opacity-90 flex items-center justify-center transition-opacity focus:outline-none cursor-pointer rounded-none shadow-sm"
                 aria-label={isPlaying ? 'Pause' : 'Play'}
                 id="play-btn"
               >
                 {isPlaying ? (
-                  <Pause className="w-5 h-5 fill-current text-current" />
+                  <Pause className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-current" />
                 ) : (
-                  <Play className="w-5 h-5 fill-current text-current translate-x-0.5" />
+                  <Play className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-current translate-x-0.5" />
                 )}
               </button>
 
               {/* High-Fidelity Waveform Visualizer */}
               <div
-                className="relative w-full h-12 bg-neutral-100 dark:bg-neutral-800/80 cursor-pointer overflow-hidden border border-neutral-200 dark:border-neutral-700 flex items-center px-2 py-1"
+                className="relative w-full h-11 sm:h-12 bg-neutral-100 dark:bg-neutral-800/80 cursor-pointer overflow-hidden border border-neutral-200 dark:border-neutral-700 flex items-center px-1.5 sm:px-2 py-1"
                 id="waveform-container"
               >
                 <Waveform
@@ -236,11 +236,11 @@ export default function DetailsView({
                   duration={duration}
                   isPlaying={isPlaying}
                   onSeek={handleSeek}
-                  height={40}
-                  barWidth={3}
-                  barGap={2}
+                  height={36}
+                  barWidth={2.5}
+                  barGap={1.5}
                   barRadius={1.5}
-                  barsCount={64}
+                  barsCount={56}
                   showTimeHover={true}
                   className="w-full"
                 />
@@ -249,11 +249,11 @@ export default function DetailsView({
           </div>
 
           {/* Detailed Content Accordeon Layout (Wireframe table list) */}
-          <div className="space-y-4">
+          <div className="space-y-3 sm:space-y-4">
             <h2 className="font-mono text-xs font-bold text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-2 uppercase tracking-widest">
               Contents Breakdown
             </h2>
-            <ul className="grid grid-cols-2 gap-y-3 gap-x-6 font-sans text-xs">
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 sm:gap-y-3 gap-x-6 font-sans text-xs">
               {Object.entries(contents).map(([key, val]) => (
                 <li
                   key={key}

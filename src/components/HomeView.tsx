@@ -84,8 +84,8 @@ export default function HomeView({
   return (
     <div className="w-full flex flex-col gap-16 md:gap-24">
       {/* Hero Header */}
-      <header className="w-full py-16 md:py-24 max-w-[1440px] mx-auto flex flex-col items-center justify-center text-center px-4 animate-fade-in">
-        <h1 className="font-sans text-4xl sm:text-5xl md:text-7xl font-extrabold max-w-[950px] mb-8 text-primary tracking-tighter uppercase leading-tight flex flex-col items-center">
+      <header className="w-full py-10 sm:py-16 md:py-24 max-w-[1440px] mx-auto flex flex-col items-center justify-center text-center px-4 animate-fade-in">
+        <h1 className="font-sans text-3xl sm:text-5xl md:text-7xl font-extrabold max-w-[950px] mb-6 sm:mb-8 text-primary tracking-tighter uppercase leading-tight flex flex-col items-center">
           <span className="block mb-1 sm:mb-2">Your arsenal for</span>
           <MorphingText
             texts={[
@@ -97,10 +97,10 @@ export default function HomeView({
             ]}
             morphTime={1.5}
             cooldownTime={0.8}
-            className="h-12 sm:h-16 md:h-20 w-full max-w-[900px] text-4xl sm:text-5xl md:text-7xl text-neutral-500 dark:text-neutral-400 font-extrabold tracking-tighter uppercase text-center"
+            className="h-10 sm:h-16 md:h-20 w-full max-w-[900px] text-3xl sm:text-5xl md:text-7xl text-neutral-500 dark:text-neutral-400 font-extrabold tracking-tighter uppercase text-center"
           />
         </h1>
-        <p className="font-sans text-base md:text-lg text-neutral-500 dark:text-neutral-400 max-w-[600px] mb-10 leading-relaxed font-normal">
+        <p className="font-sans text-sm sm:text-base md:text-lg text-neutral-500 dark:text-neutral-400 max-w-[600px] mb-8 sm:mb-10 leading-relaxed font-normal px-2">
           The largest portal for Drum Kits, Samples and Presets. Essential sounds curated to elevate your musical production tracks.
         </p>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
@@ -148,7 +148,7 @@ export default function HomeView({
               <article
                 key={item.id}
                 onClick={() => onSelectKit(item.id)}
-                className="min-w-[290px] md:min-w-[320px] max-w-[320px] snap-start group cursor-pointer flex flex-col gap-4 border border-transparent hover:border-neutral-200 dark:hover:border-white/15 hover:bg-white dark:hover:bg-white/[0.04] p-3 transition-all duration-300 relative"
+                className="min-w-[260px] sm:min-w-[300px] md:min-w-[320px] max-w-[320px] snap-start group cursor-pointer flex flex-col gap-4 border border-transparent hover:border-neutral-200 dark:hover:border-white/15 hover:bg-white dark:hover:bg-white/[0.04] p-3 transition-all duration-300 relative"
               >
                 {/* Cover & Vinyl sleeve block */}
                 <div className="aspect-square bg-neutral-100 dark:bg-neutral-900 relative overflow-hidden border border-neutral-200 dark:border-neutral-800 rounded-xs">
@@ -194,7 +194,7 @@ export default function HomeView({
                       className={`absolute bottom-2.5 left-2.5 z-30 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md cursor-pointer ${
                         isPlaying
                           ? 'bg-black text-white dark:bg-white dark:text-black scale-105'
-                          : 'bg-black/80 text-white dark:bg-white/90 dark:text-black opacity-0 group-hover:opacity-100 hover:scale-110'
+                          : 'bg-black/80 text-white dark:bg-white/90 dark:text-black opacity-90 md:opacity-0 md:group-hover:opacity-100 hover:scale-110'
                       }`}
                       title={isPlaying ? 'Pausar prévia' : 'Ouvir no vinil'}
                     >

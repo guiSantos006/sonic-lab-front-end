@@ -37,8 +37,8 @@ export function CartModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-neutral-900 text-black dark:text-white border border-black dark:border-neutral-700 max-w-md w-full p-6 relative flex flex-col gap-6 rounded-none shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white dark:bg-neutral-900 text-black dark:text-white border border-black dark:border-neutral-700 max-w-md w-full p-4 sm:p-6 relative flex flex-col gap-4 sm:gap-6 rounded-none shadow-2xl max-h-[90vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -177,8 +177,8 @@ export function InfoModal({ isOpen, title, onClose, topic }: InfoModalProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4 backdrop-blur-sm animate-fade-in">
-      <div className="bg-white dark:bg-neutral-900 text-black dark:text-white border border-black dark:border-neutral-700 max-w-md w-full p-6 relative flex flex-col gap-4 rounded-none shadow-2xl">
+    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-3 sm:p-4 backdrop-blur-sm animate-fade-in">
+      <div className="bg-white dark:bg-neutral-900 text-black dark:text-white border border-black dark:border-neutral-700 max-w-md w-full p-4 sm:p-6 relative flex flex-col gap-4 rounded-none shadow-2xl max-h-[90vh] overflow-y-auto">
         <button
           onClick={onClose}
           className="absolute top-4 right-4 p-1 hover:bg-neutral-100 dark:hover:bg-neutral-800 text-black dark:text-white cursor-pointer"

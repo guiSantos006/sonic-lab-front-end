@@ -476,7 +476,7 @@ export default function SellView({ onPublish, onNavigate, creatorName, isLoggedI
               <label className="block font-mono text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400">
                 Category
               </label>
-              <div className="flex flex-wrap gap-6">
+              <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3 sm:gap-6">
                 <label className="flex items-center gap-2 cursor-pointer">
                   <input
                     type="radio"

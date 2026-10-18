@@ -74,6 +74,9 @@ export default function CatalogView({
   const [sortBy, setSortBy] = useState<'default' | 'priceAsc' | 'priceDesc' | 'title'>('default');
   const [visibleCount, setVisibleCount] = useState(6);
 
+  // Mobile filters accordion toggle
+  const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
+
   // Dynamic tags loaded from backend API (GET /soundkits/tags)
   const [backendTags, setBackendTags] = useState<string[]>([]);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
@@ -172,10 +175,10 @@ export default function CatalogView({
       {/* Acrylic Glass Frame - strictly on the catalog page */}
       <div
         id="catalog-acrylic-panel"
-        className="w-full rounded-2xl md:rounded-[28px] p-6 sm:p-8 lg:p-10 border border-white/30 dark:border-white/10 bg-white/45 dark:bg-white/[0.035] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.08)] transition-all duration-300 flex flex-col md:flex-row gap-8 lg:gap-12"
+        className="w-full rounded-xl sm:rounded-2xl md:rounded-[28px] p-4 sm:p-6 md:p-8 lg:p-10 border border-white/30 dark:border-white/10 bg-white/45 dark:bg-white/[0.035] backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(255,255,255,0.4)] dark:shadow-[0_12px_40px_rgba(0,0,0,0.5),inset_0_1px_1px_rgba(255,255,255,0.08)] transition-all duration-300 flex flex-col md:flex-row gap-6 md:gap-8 lg:gap-12"
       >
         {/* Sidebar Filters */}
-        <aside className="w-full md:w-1/4 flex flex-col gap-8">
+        <aside className="w-full md:w-1/4 flex flex-col gap-4 md:gap-8">
         
         {/* Decorative desktop heading */}
         <div className="hidden md:block">
@@ -198,6 +201,34 @@ export default function CatalogView({
             className="w-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-black dark:text-white focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 pl-10 pr-3 py-2.5 font-sans text-xs transition-all outline-none"
           />
         </div>
+
+        {/* Mobile Filter Toggle Button (< md screens) */}
+        <div className="flex md:hidden items-center justify-between gap-2">
+          <button
+            type="button"
+            onClick={() => setIsMobileFiltersOpen(!isMobileFiltersOpen)}
+            className="flex-1 py-2.5 px-3 border border-neutral-300 dark:border-neutral-700 bg-white/80 dark:bg-neutral-900/80 text-black dark:text-white font-mono text-xs uppercase tracking-wider font-bold flex items-center justify-between cursor-pointer"
+          >
+            <span className="flex items-center gap-1.5">
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>Filtros & Categorias</span>
+            </span>
+            <span className="text-[10px] text-neutral-500 font-bold">
+              {isMobileFiltersOpen ? '▲ Fechar' : '▼ Expandir'}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={resetFilters}
+            className="py-2.5 px-3 border border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer"
+            title="Limpar filtros"
+          >
+            <FilterX className="w-3.5 h-3.5" />
+          </button>
+        </div>
+
+        {/* Filter Sections (collapsible on mobile, always visible on desktop) */}
+        <div className={`${isMobileFiltersOpen ? 'flex' : 'hidden'} md:flex flex-col gap-6 md:gap-8 pt-2 md:pt-0 border-t border-neutral-200 dark:border-neutral-800 md:border-t-0`}>
 
         {/* Categorias Block */}
         <section className="flex flex-col gap-3">
@@ -366,6 +397,7 @@ export default function CatalogView({
           <FilterX className="w-3.5 h-3.5" />
           Clear filters
         </button>
+        </div>
       </aside>
 
       {/* Main product catalog grids */}
@@ -459,7 +491,7 @@ export default function CatalogView({
                         className={`absolute bottom-2.5 left-2.5 z-30 w-9 h-9 rounded-full flex items-center justify-center transition-all duration-300 shadow-md cursor-pointer ${
                           isPlaying
                             ? 'bg-black text-white dark:bg-white dark:text-black scale-105'
-                            : 'bg-black/80 text-white dark:bg-white/90 dark:text-black opacity-0 group-hover:opacity-100 hover:scale-110'
+                            : 'bg-black/80 text-white dark:bg-white/90 dark:text-black opacity-90 md:opacity-0 md:group-hover:opacity-100 hover:scale-110'
                         }`}
                         title={isPlaying ? 'Pausar prévia' : 'Ouvir no vinil'}
                       >

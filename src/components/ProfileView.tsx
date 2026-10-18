@@ -148,7 +148,7 @@ export default function ProfileView({
     <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 py-8 md:py-12 flex flex-col gap-10 animate-fade-in">
       
       {/* Profile Header Block */}
-      <header className="flex flex-col md:flex-row gap-8 items-start md:items-center w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 shadow-[0_4px_22px_rgba(0,0,0,0.01)] relative">
+      <header className="flex flex-col sm:flex-row gap-6 sm:gap-8 items-center sm:items-start md:items-center w-full bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-4 sm:p-6 shadow-[0_4px_22px_rgba(0,0,0,0.01)] relative text-center sm:text-left">
         {/* Avatar Image circle */}
         <div className="flex flex-col items-center gap-1.5 shrink-0 select-none">
           <div
@@ -284,7 +284,7 @@ export default function ProfileView({
       </header>
 
       {/* Tabs list switchers */}
-      <div className="w-full border-b border-neutral-200 dark:border-neutral-800 flex gap-8 overflow-x-auto no-scrollbar">
+      <div className="w-full border-b border-neutral-200 dark:border-neutral-800 flex gap-4 sm:gap-8 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('my_kits')}
           className={`pb-3 font-mono text-xs font-bold tracking-wider uppercase transition-colors whitespace-nowrap cursor-pointer ${

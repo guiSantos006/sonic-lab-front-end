@@ -453,6 +453,7 @@ export async function apiResetPassword(payload: ResetPasswordRequest): Promise<s
   return responseText || 'Senha redefinida com sucesso.';
 }
 
+
 /**
  * GET /teste
  * Returns string

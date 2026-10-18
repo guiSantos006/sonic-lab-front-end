@@ -108,10 +108,113 @@ export default function GlobalAudioPlayer({
       id="global-audio-player"
       className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-[#0c0d12]/95 backdrop-blur-md border-t border-neutral-200 dark:border-neutral-800 shadow-[0_-8px_30px_rgba(0,0,0,0.12)] dark:shadow-[0_-8px_30px_rgba(0,0,0,0.5)] transition-all duration-300"
     >
-      <div className="max-w-[1440px] mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex flex-col md:flex-row items-center gap-3 md:gap-6">
+      {/* Top scrubber bar (interactive progress on mobile & desktop) */}
+      <div
+        onClick={(e) => {
+          const rect = e.currentTarget.getBoundingClientRect();
+          const clickX = e.clientX - rect.left;
+          const pct = Math.max(0, Math.min(1, clickX / rect.width));
+          handleSeek(pct);
+        }}
+        className="absolute -top-1 left-0 right-0 h-1.5 bg-neutral-200 dark:bg-neutral-800 cursor-pointer group z-10"
+        title="Arrastar para avançar/voltar"
+      >
+        <div
+          className="h-full bg-primary transition-all duration-75 relative"
+          style={{ width: `${Math.min(100, Math.max(0, progress * 100))}%` }}
+        >
+          <div className="absolute right-0 top-1/2 -translate-y-1/2 w-2.5 h-2.5 bg-primary rounded-full opacity-0 group-hover:opacity-100 transition-opacity" />
+        </div>
+      </div>
+
+      {/* MOBILE COMPACT PLAYER (< md screens) */}
+      <div className="flex md:hidden items-center justify-between px-3 py-2 gap-2 max-w-[1440px] mx-auto">
+        {/* Cover + Info */}
+        <div
+          onClick={() => onViewDetails(activeKit.id)}
+          className="flex items-center gap-2.5 min-w-0 flex-1 cursor-pointer"
+        >
+          <div className="relative w-10 h-10 rounded shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
+            <img
+              src={activeKit.coverImage}
+              alt={activeKit.title}
+              className="w-full h-full object-cover grayscale"
+              referrerPolicy="no-referrer"
+            />
+            {isPlaying && (
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
+                <VinylRecord
+                  isPlaying={isPlaying}
+                  size="sm"
+                  className="scale-[0.32] origin-center"
+                  showTonearm={false}
+                />
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="font-sans text-xs font-bold text-black dark:text-white truncate">
+              {activeKit.title}
+            </h4>
+            <div className="flex items-center gap-1.5 font-mono text-[9px] text-neutral-500 uppercase tracking-wide">
+              <span className="truncate">{activeKit.creator}</span>
+              <span>·</span>
+              <span className="tabular-nums font-bold text-neutral-600 dark:text-neutral-400">
+                {formatTime(currentTime)} / {formatTime(duration)}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Mobile controls */}
+        <div className="flex items-center gap-1 shrink-0">
+          <button
+            onClick={() => onTogglePlay(activeKit)}
+            className="w-9 h-9 rounded-full bg-black dark:bg-white text-white dark:text-black flex items-center justify-center active:scale-95 cursor-pointer shadow-sm"
+            aria-label={isPlaying ? 'Pausar' : 'Reproduzir'}
+          >
+            {isPlaying ? (
+              <Pause className="w-4 h-4 fill-current" />
+            ) : (
+              <Play className="w-4 h-4 fill-current translate-x-0.5" />
+            )}
+          </button>
+
+          <button
+            onClick={() => onAddToCart(activeKit)}
+            className={`p-2 border text-xs font-mono transition-all flex items-center gap-1 cursor-pointer min-h-[36px] ${
+              isKitInCart
+                ? 'bg-neutral-100 dark:bg-neutral-800 text-neutral-500 border-neutral-300 dark:border-neutral-700'
+                : 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white'
+            }`}
+            title={isKitInCart ? 'No carrinho' : `Adicionar por $${activeKit.price}`}
+          >
+            {isKitInCart ? (
+              <Check className="w-3.5 h-3.5" />
+            ) : (
+              <>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span className="font-bold text-[10px]">${activeKit.price}</span>
+              </>
+            )}
+          </button>
+
+          <button
+            onClick={onClose}
+            className="p-1.5 text-neutral-400 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
+            title="Fechar reprodutor"
+            aria-label="Fechar reprodutor"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* DESKTOP FULL PLAYER (>= md screens) */}
+      <div className="hidden md:flex max-w-[1440px] mx-auto px-4 lg:px-6 py-2.5 sm:py-3 flex-row items-center gap-4 lg:gap-6">
         
         {/* Left: Kit metadata & mini vinyl sleeve */}
-        <div className="flex items-center gap-3 w-full md:w-auto md:min-w-[260px] md:max-w-[320px] shrink-0">
+        <div className="flex items-center gap-3 w-auto min-w-[240px] max-w-[300px] shrink-0">
           <div className="relative w-11 h-11 rounded shrink-0 overflow-hidden border border-neutral-200 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800">
             <img
               src={activeKit.coverImage}
@@ -119,7 +222,6 @@ export default function GlobalAudioPlayer({
               className="w-full h-full object-cover grayscale"
               referrerPolicy="no-referrer"
             />
-            {/* Spinning mini vinyl dot when playing */}
             {isPlaying && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30 pointer-events-none">
                 <VinylRecord
@@ -183,7 +285,7 @@ export default function GlobalAudioPlayer({
         </div>
 
         {/* Center: Playback Controls & Waveform */}
-        <div className="flex flex-col md:flex-row items-center gap-2 sm:gap-4 flex-1 w-full min-w-0">
+        <div className="flex flex-row items-center gap-3 sm:gap-4 flex-1 w-full min-w-0">
           
           {/* Action transport buttons */}
           <div className="flex items-center gap-2 shrink-0">
@@ -234,7 +336,7 @@ export default function GlobalAudioPlayer({
 
           {/* Time display & Interactive Waveform Canvas */}
           <div className="flex items-center gap-2 w-full min-w-0 flex-1">
-            <span className="font-mono text-[10px] text-neutral-500 w-9 text-right shrink-0">
+            <span className="font-mono text-[10px] text-neutral-500 w-9 text-right shrink-0 tabular-nums">
               {formatTime(currentTime)}
             </span>
 
@@ -257,14 +359,14 @@ export default function GlobalAudioPlayer({
               />
             </div>
 
-            <span className="font-mono text-[10px] text-neutral-400 w-9 shrink-0">
+            <span className="font-mono text-[10px] text-neutral-400 w-9 shrink-0 tabular-nums">
               {formatTime(duration)}
             </span>
           </div>
         </div>
 
         {/* Right: Volume & Dismiss */}
-        <div className="flex items-center gap-2 shrink-0 justify-end w-full md:w-auto">
+        <div className="flex items-center gap-2 shrink-0 justify-end w-auto">
           {/* Volume control with popover/slider */}
           <div className="relative flex items-center">
             <button
@@ -280,7 +382,7 @@ export default function GlobalAudioPlayer({
               )}
             </button>
 
-            {/* Compact Volume slider on hover or mobile */}
+            {/* Compact Volume slider on hover */}
             <div
               className={`flex items-center transition-all ${
                 showVolumeSlider ? 'opacity-100 w-20' : 'opacity-70 w-16 hover:opacity-100'

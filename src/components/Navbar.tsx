@@ -173,8 +173,8 @@ export default function Navbar({
             id="nav-mobile-toggle"
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors cursor-pointer"
-            aria-label="Menu"
+            className="md:hidden min-h-[44px] min-w-[44px] flex items-center justify-center p-2 text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors cursor-pointer"
+            aria-label="Abrir menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -183,38 +183,95 @@ export default function Navbar({
 
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-t border-outline-variant/60 bg-background/95 backdrop-blur-xl px-4 py-4 space-y-3 font-mono text-xs uppercase tracking-wider animate-in fade-in slide-in-from-top-2 duration-150">
+        <div className="md:hidden border-t border-outline-variant/60 bg-background/98 backdrop-blur-2xl px-5 py-4 space-y-2 font-mono text-xs uppercase tracking-wider animate-in fade-in slide-in-from-top-2 duration-150 shadow-2xl">
           <button
             onClick={() => handleNavClick('catalog')}
-            className="w-full text-left py-2 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
+            className="w-full text-left py-2.5 px-1 text-neutral-800 dark:text-neutral-200 hover:text-primary flex items-center justify-between border-b border-outline-variant/40"
           >
-            <span>Catálogo Completo</span>
+            <span className="font-bold">Catálogo Completo</span>
             <span className="text-neutral-400">&rarr;</span>
           </button>
+          
+          <div className="grid grid-cols-3 gap-2 py-1 text-[11px]">
+            <button
+              onClick={() => handleNavClick('catalog')}
+              className="py-2 px-2 text-center bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border border-outline-variant/60"
+            >
+              Drum Kits
+            </button>
+            <button
+              onClick={() => handleNavClick('catalog')}
+              className="py-2 px-2 text-center bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border border-outline-variant/60"
+            >
+              Samples
+            </button>
+            <button
+              onClick={() => handleNavClick('catalog')}
+              className="py-2 px-2 text-center bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border border-outline-variant/60"
+            >
+              Presets
+            </button>
+          </div>
+
           <button
             onClick={() => handleNavClick('sell')}
-            className="w-full text-left py-2 font-bold text-neutral-800 dark:text-neutral-100 hover:text-primary flex items-center justify-between"
+            className="w-full text-left py-2.5 px-1 font-bold text-neutral-900 dark:text-neutral-100 hover:text-primary flex items-center justify-between border-b border-outline-variant/40"
           >
             <span className="flex items-center gap-1.5 text-primary">
               <span>+ Publicar SoundKit</span>
             </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400" />
           </button>
+
+          <button
+            onClick={() => {
+              onOpenCart();
+              setMobileMenuOpen(false);
+            }}
+            className="w-full text-left py-2.5 px-1 text-neutral-800 dark:text-neutral-200 hover:text-primary flex items-center justify-between border-b border-outline-variant/40"
+          >
+            <span className="flex items-center gap-2">
+              <ShoppingBag className="w-3.5 h-3.5 text-neutral-500" />
+              <span>Carrinho de Compras</span>
+            </span>
+            {cartCount > 0 ? (
+              <span className="px-2 py-0.5 rounded-full bg-primary text-on-primary text-[10px] font-bold">
+                {cartCount}
+              </span>
+            ) : (
+              <span className="text-neutral-400 text-[10px]">Vazio</span>
+            )}
+          </button>
+
           {isLoggedIn ? (
-            <button
-              onClick={() => handleNavClick('profile')}
-              className="w-full text-left py-2 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
-            >
-              <span>Meu Perfil ({userName || 'Produtor'})</span>
-              <User className="w-3.5 h-3.5 text-neutral-400" />
-            </button>
+            <div className="pt-2 flex flex-col gap-2">
+              <button
+                onClick={() => handleNavClick('profile')}
+                className="w-full text-left py-2 px-1 text-neutral-700 dark:text-neutral-300 hover:text-primary flex items-center justify-between"
+              >
+                <span>Meu Perfil ({userName || 'Produtor'})</span>
+                <User className="w-3.5 h-3.5 text-neutral-400" />
+              </button>
+              {onLogout && (
+                <button
+                  onClick={() => {
+                    onLogout();
+                    setMobileMenuOpen(false);
+                  }}
+                  className="w-full py-2 px-1 text-left text-red-500 dark:text-red-400 text-[11px] flex items-center justify-between"
+                >
+                  <span>Encerrar Sessão</span>
+                  <LogOut className="w-3.5 h-3.5" />
+                </button>
+              )}
+            </div>
           ) : (
             <div className="pt-2">
               <button
                 onClick={() => handleNavClick('login')}
                 className="w-full py-2.5 border border-primary bg-primary text-on-primary text-center font-mono text-xs uppercase tracking-wider font-bold"
               >
-                Entrar
+                Entrar / Cadastrar
               </button>
             </div>
           )}
