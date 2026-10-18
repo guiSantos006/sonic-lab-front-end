@@ -389,7 +389,7 @@ export default function ProfileView({
                           {item.bpm} BPM
                         </span>
                       )}
-                      {item.tags.includes('PRESET') || item.category === 'preset_bank' ? (
+                      {(Array.isArray(item.tags) && item.tags.includes('PRESET')) || item.category === 'preset_bank' ? (
                         <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
                           PRESETS
                         </span>
@@ -445,7 +445,7 @@ export default function ProfileView({
                       </h3>
                       <div className="flex items-center gap-1.5 shrink-0">
                         <span className="font-mono text-xs font-extrabold text-neutral-800 dark:text-neutral-200 whitespace-nowrap bg-neutral-100 dark:bg-neutral-800 px-1 border border-neutral-200 dark:border-neutral-700">
-                          ${item.price.toFixed(2)}
+                          ${typeof item.price === 'number' ? item.price.toFixed(2) : parseFloat(String(item.price || 0)).toFixed(2)}
                         </span>
                         {onDeleteKit && (
                           <button
@@ -472,7 +472,7 @@ export default function ProfileView({
 
                     <div className="flex gap-2 items-center">
                       <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
-                        {item.category.toUpperCase().replace('_', ' ')}
+                        {(item.category || 'kit').toUpperCase().replace('_', ' ')}
                       </span>
                       {item.fileCount && (
                         <span className="font-mono text-[9px] text-neutral-400 dark:text-neutral-400 border border-neutral-200 dark:border-neutral-700 px-1.5 py-0.5 uppercase bg-neutral-50 dark:bg-neutral-800 font-bold">
@@ -491,7 +491,7 @@ export default function ProfileView({
         {activeTab === 'settings' && (
           <div className="max-w-2xl bg-white dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 p-6 space-y-8 animate-fade-in">
             <h3 className="font-sans text-lg font-bold border-b border-neutral-100 dark:border-neutral-800 pb-2 uppercase tracking-tight text-primary">
-              Account Preferences
+              Preferências da Conta
             </h3>
 
             {/* Global Theme Switcher Preference Card */}
@@ -500,14 +500,14 @@ export default function ProfileView({
                 <div className="space-y-0.5">
                   <h4 className="font-sans text-sm font-bold text-neutral-800 dark:text-neutral-100 flex items-center gap-2">
                     {theme === 'dark' ? <Moon className="w-4 h-4 text-amber-400" /> : <Sun className="w-4 h-4 text-amber-500" />}
-                    Theme Appearance
+                    Aparência do Tema
                   </h4>
                   <p className="font-sans text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-                    Toggle between Light and Dark modes. Persisted in localStorage and synchronizes across the application.
+                    Alterne entre os modos Claro e Escuro. As preferências são salvas automaticamente no seu navegador.
                   </p>
                 </div>
                 <span className="font-mono text-[10px] uppercase font-bold px-2 py-0.5 border border-neutral-300 dark:border-neutral-700 bg-neutral-100 dark:bg-neutral-800 text-neutral-800 dark:text-neutral-200">
-                  {theme.toUpperCase()} ACTIVE
+                  {theme === 'dark' ? 'MODO ESCURO ATIVO' : 'MODO CLARO ATIVO'}
                 </span>
               </div>
 
@@ -516,8 +516,10 @@ export default function ProfileView({
                   type="button"
                   id="profile-theme-light-btn"
                   onClick={() => {
-                    setTheme('light');
-                    onShowNotification('Switched to Light Mode (saved to localStorage)');
+                    if (theme !== 'light') {
+                      setTheme('light');
+                      onShowNotification('Modo Claro ativado');
+                    }
                   }}
                   className={`py-3 px-4 border font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
                     theme === 'light'
@@ -526,14 +528,16 @@ export default function ProfileView({
                   }`}
                 >
                   <Sun className="w-4 h-4 text-amber-500" />
-                  Light Mode
+                  Modo Claro
                 </button>
                 <button
                   type="button"
                   id="profile-theme-dark-btn"
                   onClick={() => {
-                    setTheme('dark');
-                    onShowNotification('Switched to Dark Mode (saved to localStorage)');
+                    if (theme !== 'dark') {
+                      setTheme('dark');
+                      onShowNotification('Modo Escuro ativado');
+                    }
                   }}
                   className={`py-3 px-4 border font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all ${
                     theme === 'dark'
@@ -542,7 +546,7 @@ export default function ProfileView({
                   }`}
                 >
                   <Moon className="w-4 h-4 text-amber-400" />
-                  Dark Mode
+                  Modo Escuro
                 </button>
               </div>
             </div>

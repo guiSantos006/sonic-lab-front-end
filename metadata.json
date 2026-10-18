@@ -1,6 +1,6 @@
 {
-  "name": "teste frontSonicLab",
-  "description": "Imported from GitHub: Felipe-R-Faria/frontSonicLab",
+  "name": "SONIC_LAB - Sound Kit Marketplace",
+  "description": "Sound kit marketplace and producer terminal featuring audio packs, sample preview waveforms, producer studio, and kit catalog",
   "requestFramePermissions": [],
   "majorCapabilities": [
     "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"

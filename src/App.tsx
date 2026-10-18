@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Component, ReactNode, ErrorInfo } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Sparkles, Terminal, X, CheckCircle, Info } from 'lucide-react';
 
@@ -29,6 +29,55 @@ import DetailsView from './components/DetailsView';
 import ProfileView from './components/ProfileView';
 import LoginView from './components/LoginView';
 import RegisterView from './components/RegisterView';
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  override state: ErrorBoundaryState = { hasError: false, error: null };
+
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  override componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[SONIC_LAB ErrorBoundary]', error, errorInfo);
+  }
+
+  override render() {
+    if (this.state.hasError) {
+      return (
+        <div className="w-full max-w-xl mx-auto my-16 p-6 border border-neutral-300 dark:border-neutral-700 bg-white dark:bg-neutral-900 text-center space-y-4 shadow-xl">
+          <div className="w-3 h-3 rounded-full bg-amber-500 mx-auto" />
+          <h3 className="font-sans text-base font-bold text-primary">Algo deu errado ao renderizar esta área</h3>
+          <p className="text-xs text-neutral-500 font-mono">
+            {this.state.error?.message || 'Ocorreu uma falha inesperada.'}
+          </p>
+          <button
+            onClick={() => {
+              this.setState({ hasError: false, error: null });
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-black dark:bg-white text-white dark:text-black text-xs font-mono uppercase font-bold cursor-pointer"
+          >
+            Recarregar visualização
+          </button>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
+}
 
 export default function App() {
   // Navigation States
@@ -456,66 +505,68 @@ export default function App() {
 
         {/* Main Container workspace with smooth transitions and margins */}
         <main className="flex-grow w-full max-w-[1440px] mx-auto px-6 md:px-8 py-6 mb-16 relative z-10">
-          {/* Content routing rendering through Framer Motion wrapper */}
-          <AnimatePresence mode="wait">
-            <motion.div
-              key={currentView === 'details' ? `details-${selectedKitId}` : currentView}
-              initial={{ opacity: 0, y: 8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -8 }}
-              transition={{ duration: 0.25 }}
-              className="w-full"
-            >
-              {/* View Switching */}
-              {currentView === 'home' && (
-                <HomeView
-                  kits={kits}
-                  onSelectKit={handleSelectKitDetails}
-                  onNavigate={handleNavigate}
-                  onAddToCart={handleAddToCart}
-                />
-              )}
+          {/* Content routing rendering with ErrorBoundary and smooth transition */}
+          <ErrorBoundary>
+            <AnimatePresence initial={false}>
+              <motion.div
+                key={currentView === 'details' ? `details-${selectedKitId}` : currentView}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.15 }}
+                className="w-full"
+              >
+                {/* View Switching */}
+                {currentView === 'home' && (
+                  <HomeView
+                    kits={kits}
+                    onSelectKit={handleSelectKitDetails}
+                    onNavigate={handleNavigate}
+                    onAddToCart={handleAddToCart}
+                  />
+                )}
 
-              {currentView === 'catalog' && (
-                <CatalogView
-                  kits={kits}
-                  onSelectKit={handleSelectKitDetails}
-                  onAddToCart={handleAddToCart}
-                />
-              )}
+                {currentView === 'catalog' && (
+                  <CatalogView
+                    kits={kits}
+                    onSelectKit={handleSelectKitDetails}
+                    onAddToCart={handleAddToCart}
+                  />
+                )}
 
-              {currentView === 'sell' && (
-                <SellView
-                  onPublish={handlePublishNewKit}
-                  onNavigate={handleNavigate}
-                  creatorName={profile.name}
-                  isLoggedIn={isLoggedIn}
-                />
-              )}
+                {currentView === 'sell' && (
+                  <SellView
+                    onPublish={handlePublishNewKit}
+                    onNavigate={handleNavigate}
+                    creatorName={profile.name}
+                    isLoggedIn={isLoggedIn}
+                  />
+                )}
 
-              {currentView === 'details' && (
-                <DetailsView
-                  kit={currentDetailsKit}
-                  onBack={() => handleNavigate('catalog')}
-                  onAddToCart={handleAddToCart}
-                  onBuyNow={handleExpressBuy}
-                  isInCart={cart.some((k) => k.id === currentDetailsKit.id)}
-                />
-              )}
+                {currentView === 'details' && (
+                  <DetailsView
+                    kit={currentDetailsKit}
+                    onBack={() => handleNavigate('catalog')}
+                    onAddToCart={handleAddToCart}
+                    onBuyNow={handleExpressBuy}
+                    isInCart={cart.some((k) => k.id === currentDetailsKit.id)}
+                  />
+                )}
 
-              {currentView === 'profile' && (
-                <ProfileView
-                  profile={profile}
-                  purchasedKits={purchasedKits}
-                  creatorKits={creatorPublishedKits}
-                  onUpdateProfile={(updated) => setProfile(updated)}
-                  onSelectKit={handleSelectKitDetails}
-                  onShowNotification={triggerNotification}
-                  onDeleteKit={handleDeleteKit}
-                />
-              )}
-            </motion.div>
-          </AnimatePresence>
+                {currentView === 'profile' && (
+                  <ProfileView
+                    profile={profile}
+                    purchasedKits={purchasedKits}
+                    creatorKits={creatorPublishedKits}
+                    onUpdateProfile={(updated) => setProfile(updated)}
+                    onSelectKit={handleSelectKitDetails}
+                    onShowNotification={triggerNotification}
+                    onDeleteKit={handleDeleteKit}
+                  />
+                )}
+              </motion.div>
+            </AnimatePresence>
+          </ErrorBoundary>
         </main>
 
         {/* Footer layout */}

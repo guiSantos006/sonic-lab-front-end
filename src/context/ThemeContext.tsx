@@ -26,9 +26,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     return 'light';
   });
 
-  useEffect(() => {
+  const applyDOMTheme = (mode: ThemeMode) => {
+    if (typeof document === 'undefined') return;
     const root = document.documentElement;
-    if (theme === 'dark') {
+    if (mode === 'dark') {
       root.classList.add('dark');
       root.classList.remove('light');
       root.setAttribute('data-theme', 'dark');
@@ -39,7 +40,15 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.setAttribute('data-theme', 'light');
       root.style.colorScheme = 'light';
     }
-    localStorage.setItem(THEME_STORAGE_KEY, theme);
+    try {
+      localStorage.setItem(THEME_STORAGE_KEY, mode);
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    applyDOMTheme(theme);
   }, [theme]);
 
   // Listen for system changes if user hasn't explicitly set in current session
@@ -48,7 +57,9 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const handleChange = (e: MediaQueryListEvent) => {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
       if (!saved) {
-        setThemeState(e.matches ? 'dark' : 'light');
+        const nextMode = e.matches ? 'dark' : 'light';
+        applyDOMTheme(nextMode);
+        setThemeState(nextMode);
       }
     };
     mediaQuery.addEventListener('change', handleChange);
@@ -56,10 +67,16 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const toggleTheme = () => {
-    setThemeState((prev) => (prev === 'light' ? 'dark' : 'light'));
+    setThemeState((prev) => {
+      const next: ThemeMode = prev === 'light' ? 'dark' : 'light';
+      applyDOMTheme(next);
+      return next;
+    });
   };
 
   const setTheme = (newTheme: ThemeMode) => {
+    if (newTheme !== 'light' && newTheme !== 'dark') return;
+    applyDOMTheme(newTheme);
     setThemeState(newTheme);
   };
 
