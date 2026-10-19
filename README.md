@@ -2,7 +2,7 @@
 
 <p align="center">
   <!-- IMAGEM: Banner Principal ou Mockup Geral do Projeto -->
-  <img src="./docs/screenshots/banner.png" alt="SONIC_LAB Banner Principal" width="100%" />
+  <img src="./docs/screenshots/BannerInicial.png" alt="SONIC_LAB Banner Principal" width="100%" />
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@ O **SONIC_LAB** é uma plataforma e marketplace web moderna desenvolvida para pr
 ### 🌓 Alternância de Tema (Modo Claro vs Modo Escuro)
 | Modo Escuro (Padrão) | Modo Claro |
 | :---: | :---: |
-| <!-- IMAGEM: Captura de tela do Modo Escuro --> <img src="./docs/screenshots/dark-mode.png" alt="Interface Modo Escuro" width="100%" /> | <!-- IMAGEM: Captura de tela do Modo Claro --> <img src="./docs/screenshots/light-mode.png" alt="Interface Modo Claro" width="100%" /> |
+| <!-- IMAGEM: Captura de tela do Modo Escuro --> <img src="./docs/screenshots/Tema-Escuro.png" alt="Interface Modo Escuro" width="100%" /> | <!-- IMAGEM: Captura de tela do Modo Claro --> <img src="./docs/screenshots/Tema-Claro.png" alt="Interface Modo Claro" width="100%" /> |
 
 ---
 
@@ -145,7 +145,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 4. Studio do Produtor (Publicação de Kits)
 <!-- IMAGEM: Screenshot da tela de Publicação / Venda de Kit -->
 <p align="center">
-  <img src="./docs/screenshots/PublicarSK" alt="Tela de Criação e Venda de Kit" width="100%" />
+  <img src="./docs/screenshots/PublicarSK.png" alt="Tela de Criação e Venda de Kit" width="100%" />
 </p>
 - Upload multipart de capa de álbum (JPG/PNG), áudio demo e pacote compactado em ZIP.
 - Botões auxiliares de **Demo Automática**: geram um arquivo de áudio WAV 44.1kHz e uma capa artística renderizada em Canvas em 1 clique para agilizar testes.
@@ -154,7 +154,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 5. Detalhes do Produto & Checkout
 <!-- IMAGEM: Screenshot da Página de Detalhes do Kit -->
 <p align="center">
-  <img src="./docs/screenshots/PublicarSK2" alt="Página de Detalhes do Kit" width="100%" />
+  <img src="./docs/screenshots/PublicarSK2.png" alt="Página de Detalhes do Kit" width="100%" />
 </p>
 - Exibição de especificações de estúdio: taxa de amostragem, formato, tamanho e contagem de arquivos.
 - Opção de adicionar ao carrinho ou realizar compra expressa (Sandbox).
@@ -162,9 +162,9 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 6. Perfil do Produtor & Preferências da Conta
 <!-- IMAGEM: Screenshot da aba de Configurações no Perfil -->
 <p align="center">
-  <img src="./docs/screenshots/Perfil" alt="Perfil do Produtor e Preferências" width="100%" />
-  <img src="./docs/screenshots/Perfil1" alt="Perfil do Produtor e Preferências" width="100%" />
-  <img src="./docs/screenshots/Perfil2" alt="Perfil do Produtor e Preferências" width="100%" />
+  <img src="./docs/screenshots/Perfil.png" alt="Perfil do Produtor e Preferências" width="100%" />
+  <img src="./docs/screenshots/Perfil1.png" alt="Perfil do Produtor e Preferências" width="100%" />
+  <img src="./docs/screenshots/Perfil2.png" alt="Perfil do Produtor e Preferências" width="100%" />
 </p>
 - Gestão de kits comprados com botão de download simulado em ZIP.
 - Listagem dos kits publicados pelo usuário com opção de exclusão/desativação.
