@@ -46,12 +46,12 @@ O **SONIC_LAB** é uma plataforma e marketplace web moderna desenvolvida para pr
 
 ---
 
-## 📸 Demonstração Visual
+<!-- ## 📸 Demonstração Visual -->
 
-<!-- IMAGEM: Grade ou GIF mostrando a aplicação em funcionamento -->
-<p align="center">
-  <img src="./docs/screenshots/overview-showcase.png" alt="Visão Geral do SONIC_LAB" width="100%" />
-</p>
+ <!-- IMAGEM: Grade ou GIF mostrando a aplicação em funcionamento -->
+<!-- <p align="center"> -->
+<!-- <img src="./docs/screenshots/overview-showcase.png" alt="Visão Geral do SONIC_LAB" width="100%" /> -->
+<!-- </p> -->
 
 ### 🌓 Alternância de Tema (Modo Claro vs Modo Escuro)
 | Modo Escuro (Padrão) | Modo Claro |
