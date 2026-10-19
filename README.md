@@ -2,7 +2,7 @@
 
 <p align="center">
   <!-- IMAGEM: Banner Principal ou Mockup Geral do Projeto -->
-  <img src="./docs/screenshots/banner.png" alt="SONIC_LAB Banner Principal" width="100%" />
+  <img src="./docs/screenshots/Banner.png" alt="SONIC_LAB Banner Principal" width="100%" />
 </p>
 
 <p align="center">
