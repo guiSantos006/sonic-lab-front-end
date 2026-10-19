@@ -118,7 +118,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 1. Página Inicial (Home)
 <!-- IMAGEM: Screenshot da Home / Hero Section -->
 <p align="center">
-  <img src="./docs/screenshots/home-hero.png" alt="Tela Inicial SONIC_LAB" width="100%" />
+  <img src="./docs/screenshots/Home.png" alt="Tela Inicial SONIC_LAB" width="100%" />
 </p>
 - Hero com tipografia brutalista e disco de vinil giratório interativo.
 - Vitrine de novidades e kits em destaque com preview direto em waveform.
@@ -127,7 +127,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 2. Catálogo Completo de Kits
 <!-- IMAGEM: Screenshot do Catálogo com Filtros -->
 <p align="center">
-  <img src="./docs/screenshots/catalog-filters.png" alt="Catálogo de Sound Kits com Filtros" width="100%" />
+  <img src="./docs/screenshots/Catalogo.png" alt="Catálogo de Sound Kits com Filtros" width="100%" />
 </p>
 - Campo de pesquisa em tempo real por título, descrição e tags.
 - Filtros por categoria: *Drum Kit*, *Sample Pack*, *Preset Bank* e *MIDI Kit*.
@@ -136,7 +136,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 3. Player Global de Áudio & Waveform
 <!-- IMAGEM: Screenshot do Player Global no rodapé -->
 <p align="center">
-  <img src="./docs/screenshots/audio-player-global.png" alt="Global Audio Player com Waveform" width="100%" />
+  <img src="./docs/screenshots/Player.png" alt="Global Audio Player com Waveform" width="100%" />
 </p>
 - Fixado no rodapé da aplicação, permanece ativo durante a navegação em qualquer tela.
 - Visualização de amplitude waveform com scrubbing interativo.
@@ -145,7 +145,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 4. Studio do Produtor (Publicação de Kits)
 <!-- IMAGEM: Screenshot da tela de Publicação / Venda de Kit -->
 <p align="center">
-  <img src="./docs/screenshots/publish-kit-view.png" alt="Tela de Criação e Venda de Kit" width="100%" />
+  <img src="./docs/screenshots/PublicarSK" alt="Tela de Criação e Venda de Kit" width="100%" />
 </p>
 - Upload multipart de capa de álbum (JPG/PNG), áudio demo e pacote compactado em ZIP.
 - Botões auxiliares de **Demo Automática**: geram um arquivo de áudio WAV 44.1kHz e uma capa artística renderizada em Canvas em 1 clique para agilizar testes.
@@ -154,7 +154,7 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 5. Detalhes do Produto & Checkout
 <!-- IMAGEM: Screenshot da Página de Detalhes do Kit -->
 <p align="center">
-  <img src="./docs/screenshots/kit-details.png" alt="Página de Detalhes do Kit" width="100%" />
+  <img src="./docs/screenshots/PublicarSK2" alt="Página de Detalhes do Kit" width="100%" />
 </p>
 - Exibição de especificações de estúdio: taxa de amostragem, formato, tamanho e contagem de arquivos.
 - Opção de adicionar ao carrinho ou realizar compra expressa (Sandbox).
@@ -162,7 +162,9 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 6. Perfil do Produtor & Preferências da Conta
 <!-- IMAGEM: Screenshot da aba de Configurações no Perfil -->
 <p align="center">
-  <img src="./docs/screenshots/profile-settings.png" alt="Perfil do Produtor e Preferências" width="100%" />
+  <img src="./docs/screenshots/Perfil" alt="Perfil do Produtor e Preferências" width="100%" />
+  <img src="./docs/screenshots/Perfil1" alt="Perfil do Produtor e Preferências" width="100%" />
+  <img src="./docs/screenshots/Perfil2" alt="Perfil do Produtor e Preferências" width="100%" />
 </p>
 - Gestão de kits comprados com botão de download simulado em ZIP.
 - Listagem dos kits publicados pelo usuário com opção de exclusão/desativação.
