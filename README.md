@@ -173,7 +173,8 @@ O frontend foi projetado para operar com **alta resiliência**:
 ### 7. Gateway de Autenticação (Modal Flutuante)
 <!-- IMAGEM: Screenshot do Modal de Login e Registro -->
 <p align="center">
-  <img src="./docs/screenshots/auth-modal.png" alt="Modal de Autenticação" width="100%" />
+  <img src="./docs/screenshots/SingIN.png" alt="Modal de Autenticação" width="100%" />
+  <img src="./docs/screenshots/SingUP.png" alt="Modal de Autenticação" width="100%" />
 </p>
 - Modal minimalista com efeito glassmorphism / blur.
 - Fluxos completos de:
