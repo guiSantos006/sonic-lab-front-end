@@ -85,32 +85,6 @@ O **SONIC_LAB** é uma plataforma e marketplace web moderna desenvolvida para pr
 - **Gerador de Capas em Canvas**: Utilitário para gerar artes de capas em JPEG com gradientes e tipografia sem necessidade de upload externo.
 
 ---
-
-## 🛡️ Arquitetura & Resiliência
-
-O frontend foi projetado para operar com **alta resiliência**:
-
-```
-                       ┌─────────────────────────┐
-                       │  SONIC_LAB Frontend     │
-                       │  (React 19 + Vite)      │
-                       └────────────┬────────────┘
-                                    │
-                     Tentativa HTTP direta / Proxy
-                                    │
-            ┌───────────────────────┴───────────────────────┐
-            ▼                                               ▼
-┌─────────────────────────┐                     ┌─────────────────────────┐
-│ Spring Boot Backend     │  (Se indisponível)  │ Fallback Integrado      │
-│ (Porta 8080 / OpenAPI)  │ ──────────────────► │ (localStorage / Mock)   │
-│ - /auth/*               │                     │ - Autenticação JWT Mock │
-│ - /soundkits/*          │                     │ - Kits & Uploads Mock   │
-└─────────────────────────┘                     └─────────────────────────┘
-```
-
-1. **Conexão Real**: Realiza chamadas REST com tokens Bearer JWT para a API Spring Boot (conforme especificação OpenAPI 3.1.0).
-2. **Modo Simulação / Fallback**: Se o servidor remoto ou local estiver offline ou inacessível via CORS, o frontend assume instantaneamente uma camada de persistência em `localStorage`, permitindo testar registro de contas, login, criação de pacotes de áudio e compras sem travar a interface.
-
 ---
 
 ## 🚀 Funcionalidades e Telas
