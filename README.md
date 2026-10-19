@@ -2,7 +2,7 @@
 
 <p align="center">
   <!-- IMAGEM: Banner Principal ou Mockup Geral do Projeto -->
-  <img src="./docs/screenshots/Banner.png" alt="SONIC_LAB Banner Principal" width="100%" />
+  <img src="./docs/screenshots/banner.png" alt="SONIC_LAB Banner Principal" width="100%" />
 </p>
 
 <p align="center">
@@ -56,7 +56,7 @@ O **SONIC_LAB** é uma plataforma e marketplace web moderna desenvolvida para pr
 ### 🌓 Alternância de Tema (Modo Claro vs Modo Escuro)
 | Modo Escuro (Padrão) | Modo Claro |
 | :---: | :---: |
-| <!-- IMAGEM: Captura de tela do Modo Escuro --> <img src="./docs/screenshots/dark-mode.png" alt="Interface Modo Escuro" width="100%" /> | <!-- IMAGEM: Captura de tela do Modo Claro --> <img src="./docs/screenshots/light-mode.png" alt="Interface Modo Claro" width="100%" /> |
+| <!-- IMAGEM: Captura de tela do Modo Escuro --> <img src="./docs/screenshots/Tema-Escuro.png" alt="Interface Modo Escuro" width="100%" /> | <!-- IMAGEM: Captura de tela do Modo Claro --> <img src="./docs/screenshots/light-mode.png" alt="Interface Modo Claro" width="100%" /> |
 
 ---
 
