@@ -3,7 +3,7 @@ import React from 'react';
 interface VinylRecordProps {
   isPlaying: boolean;
   onTogglePlay?: (e: React.MouseEvent) => void;
-  size?: 'sm' | 'md' | 'lg';
+  size?: 'sm' | 'md' | 'lg' | 'xl' | 'full';
   coverImage?: string;
   title?: string;
   showTonearm?: boolean;
@@ -27,6 +27,8 @@ export default function VinylRecord({
       label: 'w-8 h-8 sm:w-9 sm:h-9',
       spindle: 'w-2 h-2',
       tonearmScale: 0.65,
+      labelText: 'text-[7px]',
+      subText: 'text-[5px]',
     },
     md: {
       container: 'w-36 h-36 sm:w-44 sm:h-44',
@@ -34,6 +36,8 @@ export default function VinylRecord({
       label: 'w-12 h-12 sm:w-14 sm:h-14',
       spindle: 'w-3 h-3',
       tonearmScale: 0.9,
+      labelText: 'text-[8px]',
+      subText: 'text-[6px]',
     },
     lg: {
       container: 'w-56 h-56 sm:w-72 sm:h-72',
@@ -41,6 +45,26 @@ export default function VinylRecord({
       label: 'w-18 h-18 sm:w-24 sm:h-24',
       spindle: 'w-4 h-4',
       tonearmScale: 1.25,
+      labelText: 'text-[9px]',
+      subText: 'text-[7px]',
+    },
+    xl: {
+      container: 'w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96',
+      disc: 'w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96',
+      label: 'w-22 h-22 sm:w-28 sm:h-28 md:w-32 md:h-32',
+      spindle: 'w-4 h-4 md:w-5 md:h-5',
+      tonearmScale: 1.35,
+      labelText: 'text-[10px] md:text-xs',
+      subText: 'text-[7px] md:text-[8px]',
+    },
+    full: {
+      container: 'w-full h-full aspect-square',
+      disc: 'w-full h-full aspect-square',
+      label: 'w-[32%] h-[32%]',
+      spindle: 'w-[5%] h-[5%]',
+      tonearmScale: 1.25,
+      labelText: 'text-[8px] sm:text-[10px] md:text-xs',
+      subText: 'text-[6px] sm:text-[7px] md:text-[8px]',
     },
   }[size];
 
@@ -95,10 +119,10 @@ export default function VinylRecord({
 
           {/* Label Rim and Text */}
           <div className="relative z-10 flex flex-col items-center justify-center p-0.5">
-            <span className="font-mono text-[7px] text-white/90 font-bold uppercase tracking-tighter truncate max-w-[80%] leading-none drop-shadow-sm">
-              {title.slice(0, 8)}
+            <span className={`font-mono ${sizeMap.labelText} text-white/95 font-bold uppercase tracking-tighter truncate max-w-[85%] leading-none drop-shadow-sm`}>
+              {title.slice(0, 14)}
             </span>
-            <span className="font-mono text-[5px] text-white/60 tracking-widest leading-none mt-0.5">
+            <span className={`font-mono ${sizeMap.subText} text-white/70 tracking-widest leading-none mt-0.5`}>
               33 RPM
             </span>
           </div>

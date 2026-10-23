@@ -13,7 +13,9 @@
  */
 
 import { Kit } from '../types';
+import { INITIAL_KITS } from '../data';
 import { getBackendBaseUrl, getAuthToken, getBackendPort } from './authService';
+import JSZip from 'jszip';
 
 export type SoundKitBackendType = 'DRUM_KIT' | 'SAMPLE_PACK' | 'PRESET_BANK' | 'MIDI_KIT';
 
@@ -43,6 +45,7 @@ export interface CreateSoundKitRequest {
   audioDemo?: AudioDemoPayload;
   tags?: string[];
   specifications?: Record<string, string>;
+  contents?: Record<string, number | string>;
 }
 
 export interface SoundKitResponse {
@@ -57,6 +60,7 @@ export interface SoundKitResponse {
   audioDemo?: AudioDemoPayload;
   tags: string[];
   specifications?: Record<string, string>;
+  contents?: Record<string, number | string>;
   active: boolean;
   createdAt: string;
   updatedAt: string;
@@ -172,6 +176,65 @@ export function soundKitResponseToKit(item: SoundKitResponse): Kit {
   const resolvedCover = resolveAssetUrl(item.coverUrl) || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=400';
   const resolvedAudioUrl = item.audioDemo?.url ? resolveAssetUrl(item.audioDemo.url) : undefined;
 
+  // Resolve kit contents strictly according to the specific sound kit's own data
+  let resolvedContents: Record<string, number | string> | undefined = item.contents;
+
+  if (!resolvedContents && item.specifications?.contentsJson) {
+    try {
+      const parsed = JSON.parse(item.specifications.contentsJson);
+      if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+        resolvedContents = parsed;
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  // Check matching kit in initial catalog
+  if (!resolvedContents) {
+    const matched = INITIAL_KITS.find(
+      (k) => k.id === item.id || k.title.toLowerCase().trim() === item.title.toLowerCase().trim()
+    );
+    if (matched?.contents) {
+      resolvedContents = matched.contents;
+    }
+  }
+
+  // Dynamic, authentic breakdown based on kit specifications & category if not explicitly set
+  if (!resolvedContents) {
+    const count = item.specifications?.fileCount ? parseInt(item.specifications.fileCount, 10) : 100;
+    if (category === 'preset_bank') {
+      resolvedContents = {
+        'Main Presets (.fxp)': Math.round(count * 0.55),
+        'Lead & Pluck Presets': Math.round(count * 0.25),
+        'Dystopian / Sub Basses': Math.round(count * 0.15),
+        'Custom Wavetables': Math.max(5, Math.round(count * 0.05)),
+      };
+    } else if (category === 'midi_kit') {
+      resolvedContents = {
+        'Melody Progressions': Math.round(count * 0.4),
+        'Chord Progressions': Math.round(count * 0.35),
+        'Bassline MIDIs': Math.round(count * 0.15),
+        'Hi-Hat & Drum MIDIs': Math.round(count * 0.1),
+      };
+    } else if (category === 'sample_pack') {
+      resolvedContents = {
+        'Melody Loops & Stems': Math.round(count * 0.35),
+        'Drum & Percussion Loops': Math.round(count * 0.3),
+        'One-Shots & Chops': Math.round(count * 0.2),
+        'Ambient Textures & FX': Math.round(count * 0.15),
+      };
+    } else {
+      resolvedContents = {
+        'Kicks': Math.round(count * 0.25),
+        'Snares / Claps': Math.round(count * 0.22),
+        'Hi-Hats': Math.round(count * 0.28),
+        'Percussion & Metallic Loops': Math.round(count * 0.15),
+        'Sub 808s': Math.max(5, Math.round(count * 0.1)),
+      };
+    }
+  }
+
   return {
     id: item.id,
     title: item.title,
@@ -188,6 +251,7 @@ export function soundKitResponseToKit(item: SoundKitResponse): Kit {
     } : undefined,
     tags: item.tags || [],
     specifications: item.specifications,
+    contents: resolvedContents,
     fileCount: item.specifications?.fileCount ? parseInt(item.specifications.fileCount, 10) : undefined,
     fileSize: item.specifications?.fileSize,
     sampleRate: item.specifications?.sampleRate || '24-Bit / 44.1kHz',
@@ -267,6 +331,13 @@ function getStoredMockKits(): SoundKitResponse[] {
         sampleRate: '24-Bit / 44.1kHz',
         format: 'WAV',
       },
+      contents: {
+        'Analog Modular Kicks': 45,
+        'Distorted 808s': 30,
+        'Industrial Snares & Claps': 40,
+        'Metallic Percussion': 35,
+        'Noise Atmospheres': 30,
+      },
       active: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -293,6 +364,13 @@ function getStoredMockKits(): SoundKitResponse[] {
         sampleRate: '24-Bit / 48kHz',
         format: 'WAV',
       },
+      contents: {
+        'Sub-Bass 808 Glides': 35,
+        'Tape Saturated Snares': 35,
+        'Reel-to-Reel Hi-Hats': 40,
+        'Analog Melody Loops': 20,
+        'Percussion One-Shots': 15,
+      },
       active: true,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -318,6 +396,12 @@ function getStoredMockKits(): SoundKitResponse[] {
         fileSize: '85 MB',
         sampleRate: 'Serum .fxp',
         format: 'Presets',
+      },
+      contents: {
+        'Cyber Bass Leads': 30,
+        'Reese & Sub Basses': 25,
+        'Dystopian Soundscapes': 15,
+        'Custom Wavetables': 10,
       },
       active: true,
       createdAt: new Date().toISOString(),
@@ -555,9 +639,26 @@ export async function apiUploadDemo(file: File): Promise<AudioDemoPayload> {
   }
 }
 
+export async function extractAudioFileDuration(file: File): Promise<number> {
+  return new Promise((resolve) => {
+    const audio = new Audio();
+    const tempUrl = URL.createObjectURL(file);
+    audio.src = tempUrl;
+    audio.preload = 'metadata';
+    audio.onloadedmetadata = () => {
+      const dur = Math.round(audio.duration);
+      URL.revokeObjectURL(tempUrl);
+      resolve(!isNaN(dur) && dur > 0 ? dur : 30);
+    };
+    audio.onerror = () => {
+      URL.revokeObjectURL(tempUrl);
+      resolve(30);
+    };
+  });
+}
+
 async function simulateDemoUpload(file: File): Promise<AudioDemoPayload> {
-  // Simulate duration extraction and 100 waveform points
-  const durationInSeconds = Math.floor(Math.random() * 60) + 60; // 60s - 120s
+  const durationInSeconds = await extractAudioFileDuration(file);
   const waveformData = generateWaveformData();
   const localUrl = URL.createObjectURL(file);
   return {
@@ -674,6 +775,7 @@ function simulateCreateSoundKit(request: CreateSoundKitRequest): SoundKitRespons
     },
     tags: request.tags || ['CUSTOM', 'NEW'],
     specifications: request.specifications,
+    contents: request.contents,
     active: true,
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
@@ -952,7 +1054,134 @@ export function generateTestCoverFile(title = 'SONIC KIT', filename = 'cover.jpg
 }
 
 /**
- * Generates an in-memory sample ZIP-like package file
+ * Breakdown entry detected in a ZIP file
+ */
+export interface ZipFolderBreakdown {
+  folderName: string;
+  count: number;
+}
+
+export interface ZipAnalysisResult {
+  folders: ZipFolderBreakdown[];
+  totalFiles: number;
+  allFileNames: string[];
+}
+
+/**
+ * Inspects an uploaded .zip file client-side, reads the internal folder structure,
+ * and automatically counts the files inside each folder.
+ */
+export async function analyzeZipContents(file: File): Promise<ZipAnalysisResult> {
+  const zip = new JSZip();
+  const loaded = await zip.loadAsync(file);
+
+  const folderCountMap: Record<string, number> = {};
+  let rootFilesCount = 0;
+  const allFileNames: string[] = [];
+  let totalFiles = 0;
+
+  // First pass: collect all non-directory and non-system files
+  const filePaths: string[] = [];
+  loaded.forEach((relativePath, entry) => {
+    if (entry.dir) return;
+
+    // Filter out macOS metadata / hidden system files
+    const segments = relativePath.split('/').filter(Boolean);
+    if (
+      segments.some(
+        (seg) =>
+          seg.startsWith('__MACOSX') ||
+          seg.startsWith('.') ||
+          seg === 'Thumbs.db' ||
+          seg === 'desktop.ini'
+      )
+    ) {
+      return;
+    }
+
+    filePaths.push(relativePath);
+  });
+
+  // Check if all files are wrapped in a single root folder (e.g. "MyKit/Kicks/01.wav")
+  let commonWrapper: string | null = null;
+  if (filePaths.length > 0) {
+    const firstRoot = filePaths[0].split('/').filter(Boolean)[0];
+    const hasMoreThanOneLevel = filePaths.some((p) => p.split('/').filter(Boolean).length > 1);
+    if (hasMoreThanOneLevel && filePaths.every((p) => p.split('/').filter(Boolean)[0] === firstRoot)) {
+      commonWrapper = firstRoot;
+    }
+  }
+
+  // Second pass: group by folder
+  filePaths.forEach((path) => {
+    let segments = path.split('/').filter(Boolean);
+    if (commonWrapper && segments.length > 1 && segments[0] === commonWrapper) {
+      // Strip common root folder wrapper so we get "Kicks", "Percussion", etc.
+      segments = segments.slice(1);
+    }
+
+    const fileName = segments[segments.length - 1];
+    allFileNames.push(fileName);
+    totalFiles++;
+
+    if (segments.length > 1) {
+      // It is inside a folder, e.g. "Kicks" or "Percussion"
+      const folderName = segments[0].trim();
+      folderCountMap[folderName] = (folderCountMap[folderName] || 0) + 1;
+    } else {
+      rootFilesCount++;
+    }
+  });
+
+  const folders: ZipFolderBreakdown[] = Object.entries(folderCountMap)
+    .map(([folderName, count]) => ({
+      folderName,
+      count,
+    }))
+    .sort((a, b) => b.count - a.count);
+
+  if (rootFilesCount > 0) {
+    folders.push({
+      folderName: folders.length > 0 ? 'Root / One-Shots' : 'Audio Files',
+      count: rootFilesCount,
+    });
+  }
+
+  return {
+    folders,
+    totalFiles,
+    allFileNames,
+  };
+}
+
+/**
+ * Generates an authentic in-memory ZIP package file containing sample folders and files
+ */
+export async function generateTestPackageZip(
+  sampleBreakdown: { name: string; count: number }[],
+  filename = 'soundkit-package.zip'
+): Promise<File> {
+  const zip = new JSZip();
+
+  sampleBreakdown.forEach((item) => {
+    const cleanFolder = item.name.replace(/[/\\?%*:|"<>]/g, '_');
+    const folder = zip.folder(cleanFolder);
+    const limit = Math.min(item.count, 20);
+    for (let i = 1; i <= limit; i++) {
+      const pad = i < 10 ? `0${i}` : `${i}`;
+      folder?.file(
+        `${cleanFolder}_${pad}.wav`,
+        `SONIC_LAB_AUDIO_PCM_DATA_${cleanFolder}_SAMPLE_${pad}`
+      );
+    }
+  });
+
+  const content = await zip.generateAsync({ type: 'blob' });
+  return new File([content], filename, { type: 'application/zip', lastModified: Date.now() });
+}
+
+/**
+ * Backward-compatible helper for generating a quick test package file
  */
 export function generateTestPackageFile(filename = 'soundkit-package.zip'): File {
   const dummyHeader = 'PK\x03\x04\x14\x00\x00\x00\x08\x00' + 'SONIC_LAB_SAMPLES_BUNDLE' + '\x00'.repeat(2048);

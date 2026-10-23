@@ -9,6 +9,8 @@
  * - State change event broadcasting
  */
 
+import { getKitAudioBlob } from './audioStorage';
+
 export type AudioPlayerEvent = 'play' | 'pause' | 'stop' | 'timeupdate' | 'ended' | 'volumechange' | 'error';
 
 type Listener = () => void;
@@ -37,6 +39,7 @@ class AudioPlayerEngine {
   private isMuted = false;
   private isLoop = false;
 
+  private customAudioMap: Map<string, string> = new Map();
   private listeners: Map<AudioPlayerEvent, Set<Listener>> = new Map();
 
   constructor() {
@@ -45,15 +48,28 @@ class AudioPlayerEngine {
     }
   }
 
+  /**
+   * Registers a direct audio URL or blob URL for a specific Kit ID
+   */
+  public registerKitAudio(kitId: string, url: string) {
+    if (kitId && url) {
+      this.customAudioMap.set(kitId, url);
+    }
+  }
+
+  public getRegisteredAudio(kitId: string): string | undefined {
+    return this.customAudioMap.get(kitId);
+  }
+
   private initAudioElement() {
     if (this.audioElement) return;
 
     this.audioElement = new Audio();
     this.audioElement.preload = 'metadata';
-    this.audioElement.crossOrigin = 'anonymous';
 
     this.audioElement.addEventListener('play', () => {
       this.isPlaying = true;
+      this.isSynthesizing = false;
       this.emit('play');
     });
 
@@ -73,7 +89,7 @@ class AudioPlayerEngine {
     });
 
     this.audioElement.addEventListener('loadedmetadata', () => {
-      if (this.audioElement && !isNaN(this.audioElement.duration)) {
+      if (this.audioElement && !isNaN(this.audioElement.duration) && this.audioElement.duration > 0) {
         this.duration = this.audioElement.duration;
         this.emit('timeupdate');
       }
@@ -92,11 +108,8 @@ class AudioPlayerEngine {
     });
 
     this.audioElement.addEventListener('error', (err) => {
-      console.warn('Real audio file failed to load, switching to synthesized preview fallback:', err);
-      // Fallback seamlessly to Web Audio synthesizer
-      if (this.currentKitId && this.isPlaying) {
-        this.startSynthPlayback(this.currentKitId, 120, 'drum_kit');
-      }
+      console.warn('Audio playback error on source:', this.audioElement?.src, err);
+      this.isPlaying = false;
       this.emit('error');
     });
   }
@@ -154,7 +167,25 @@ class AudioPlayerEngine {
     audioDemo?: { url: string; durationInSeconds?: number; waveformData?: number[] };
   }) {
     this.initAudioElement();
-    this.initWebAudio();
+
+    // Check registered custom audio first (e.g. user-uploaded demo)
+    let url = this.customAudioMap.get(kit.id) || kit.audioDemo?.url || kit.audioDemoUrl;
+
+    // Check IndexedDB if audio was persisted across page refreshes
+    if (!url || url.startsWith('blob:')) {
+      try {
+        const storedBlob = await getKitAudioBlob(kit.id);
+        if (storedBlob) {
+          const freshBlobUrl = URL.createObjectURL(storedBlob);
+          this.customAudioMap.set(kit.id, freshBlobUrl);
+          url = freshBlobUrl;
+        }
+      } catch (storageErr) {
+        console.warn('AudioStorage lookup failed:', storageErr);
+      }
+    }
+
+    const specifiedDuration = kit.audioDemo?.durationInSeconds || (kit.category === 'drum_kit' ? 24 : 32);
 
     // If same kit is paused, resume it
     if (this.currentKitId === kit.id && !this.isPlaying && this.currentTime > 0) {
@@ -167,31 +198,58 @@ class AudioPlayerEngine {
     this.currentKitId = kit.id;
     this.currentKitTitle = kit.title || 'SoundKit Demo';
 
-    const url = kit.audioDemo?.url || kit.audioDemoUrl;
-    const specifiedDuration = kit.audioDemo?.durationInSeconds || (kit.category === 'drum_kit' ? 24 : 32);
-
     if (url && url.trim().length > 0 && !url.startsWith('mock:')) {
-      // Stream real audio URL
       try {
         if (!this.audioElement) this.initAudioElement();
         if (this.audioElement) {
+          // Do not set crossOrigin for local blob: or data: URLs as it causes browsers to reject playback
+          if (url.startsWith('blob:') || url.startsWith('data:')) {
+            this.audioElement.removeAttribute('crossorigin');
+          } else {
+            this.audioElement.crossOrigin = 'anonymous';
+          }
+
           this.audioElement.src = url;
           this.audioElement.volume = this.isMuted ? 0 : this.volume;
           this.audioElement.loop = this.isLoop;
           this.duration = specifiedDuration;
-          await this.audioElement.play();
-          this.isPlaying = true;
-          this.isSynthesizing = false;
-          this.emit('play');
-          return;
+
+          try {
+            await this.audioElement.play();
+            this.isPlaying = true;
+            this.isSynthesizing = false;
+            this.emit('play');
+            return;
+          } catch (firstErr) {
+            console.warn('Initial play attempt failed, retrying without crossorigin:', firstErr);
+            if (this.audioElement.hasAttribute('crossorigin')) {
+              this.audioElement.removeAttribute('crossorigin');
+              this.audioElement.src = url;
+              await this.audioElement.play();
+              this.isPlaying = true;
+              this.isSynthesizing = false;
+              this.emit('play');
+              return;
+            } else {
+              throw firstErr;
+            }
+          }
         }
       } catch (err) {
-        console.warn('Direct stream attempt failed, using Web Audio synthesizer:', err);
+        console.error('Audio file playback failed for kit:', kit.title || kit.id, err);
+        this.isPlaying = false;
+        this.emit('error');
+        return;
       }
     }
 
-    // Synthesized rhythmic preview
-    this.startSynthPlayback(kit.id, kit.bpm || 120, kit.category || 'drum_kit', specifiedDuration);
+    // If kit has no audio URL at all, only use synth if it's an unconfigured demo kit with no file
+    if (!url || url.startsWith('mock:')) {
+      this.startSynthPlayback(kit.id, kit.bpm || 120, kit.category || 'drum_kit', specifiedDuration);
+    } else {
+      this.isPlaying = false;
+      this.emit('error');
+    }
   }
 
   /**

@@ -19,7 +19,7 @@ export interface Kit {
   fileCount?: number;
   tags: string[];
   contents?: {
-    [key: string]: number;
+    [key: string]: number | string;
   };
   fileSize?: string;
   sampleRate?: string;

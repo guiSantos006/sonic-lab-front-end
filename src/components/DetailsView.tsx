@@ -24,6 +24,7 @@ export default function DetailsView({
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(kit.audioDemo?.durationInSeconds || 30);
+  const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
     // Check if this kit is currently playing in global player
@@ -95,15 +96,60 @@ export default function DetailsView({
 
   const progress = duration > 0 ? currentTime / duration : 0;
 
-  // Contents default fallback
-  const contents = kit.contents || {
-    'Snares / Claps': 45,
-    'Kicks': 50,
-    'Hi-Hats': 60,
-    'Percussion loops': 30,
-    'Bass One-Shots': 25,
-    'Atmospheres': 15
+  // Resolve contents strictly according to the specific sound kit's own data
+  const resolveKitContents = (): Record<string, number | string> => {
+    // 1. Direct kit.contents if defined
+    if (kit.contents && Object.keys(kit.contents).length > 0) {
+      return kit.contents;
+    }
+    // 2. Parse from specifications.contentsJson if available
+    if (kit.specifications?.contentsJson) {
+      try {
+        const parsed = JSON.parse(kit.specifications.contentsJson);
+        if (parsed && typeof parsed === 'object' && Object.keys(parsed).length > 0) {
+          return parsed;
+        }
+      } catch {
+        // ignore
+      }
+    }
+    // 3. Category-specific breakdown matching this sound kit
+    const total = kit.fileCount || 100;
+    switch (kit.category) {
+      case 'preset_bank':
+        return {
+          'Main Presets (.fxp)': Math.round(total * 0.55),
+          'Lead & Pluck Presets': Math.round(total * 0.25),
+          'Dystopian / Sub Basses': Math.round(total * 0.15),
+          'Custom Wavetables': Math.max(5, Math.round(total * 0.05)),
+        };
+      case 'midi_kit':
+        return {
+          'Melody Progressions': Math.round(total * 0.4),
+          'Chord Progressions': Math.round(total * 0.35),
+          'Bassline MIDIs': Math.round(total * 0.15),
+          'Hi-Hat & Drum MIDIs': Math.round(total * 0.1),
+        };
+      case 'sample_pack':
+        return {
+          'Melody Loops & Stems': Math.round(total * 0.35),
+          'Drum & Percussion Loops': Math.round(total * 0.3),
+          'One-Shots & Chops': Math.round(total * 0.2),
+          'Ambient Textures & FX': Math.round(total * 0.15),
+        };
+      case 'drum_kit':
+      default:
+        return {
+          'Kicks': Math.round(total * 0.25),
+          'Snares / Claps': Math.round(total * 0.22),
+          'Hi-Hats': Math.round(total * 0.28),
+          'Percussion & Metallic Loops': Math.round(total * 0.15),
+          'Sub 808s': Math.max(5, Math.round(total * 0.1)),
+        };
+    }
   };
+
+  const contents = resolveKitContents();
 
   // Format mm:ss
   const formatClock = (sec: number) => {
@@ -128,33 +174,115 @@ export default function DetailsView({
       </div>
 
       <div className="grid grid-cols-12 gap-8 md:gap-12">
-        {/* LEFT: Cover and minimalist vinyl turntable */}
+        {/* LEFT: Cover and interactive 3-state vinyl turntable sleeve */}
         <div className="col-span-12 lg:col-span-7 flex flex-col gap-6">
-          <div className="w-full aspect-square md:aspect-[4/3] lg:aspect-square bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 relative overflow-hidden group flex items-center justify-center p-3 sm:p-6">
-            <div className="absolute inset-0 bg-gradient-to-b from-transparent to-black/10 dark:to-white/[0.02]" />
-
-            {/* Minimalist Vinyl Record Turntable */}
-            <div
-              className={`relative z-10 transition-all duration-700 ease-out flex items-center justify-center max-w-full overflow-hidden ${
-                isPlaying
-                  ? 'scale-100 sm:scale-105'
-                  : 'scale-90 sm:scale-95 group-hover:scale-100 opacity-90 group-hover:opacity-100'
-              }`}
-            >
-              <VinylRecord
-                size="lg"
-                isPlaying={isPlaying}
-                title={kit.title}
-                coverImage={kit.coverImage}
-                showTonearm={true}
-                onTogglePlay={handlePlayToggle}
+          <div
+            className="w-full aspect-square bg-neutral-950 border border-neutral-200 dark:border-neutral-800 relative overflow-hidden group select-none cursor-pointer rounded-none md:rounded-xs shadow-2xl transition-all"
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
+            onClick={handlePlayToggle}
+            title={isPlaying ? 'Pausar reprodução' : 'Clique para reproduzir prévia'}
+          >
+            {/* 1. Base Album Artwork Cover (Visible alone on initial state; blurs to background on play) */}
+            <div className="absolute inset-0 w-full h-full overflow-hidden bg-neutral-950">
+              <img
+                src={kit.coverImage}
+                alt={kit.title}
+                className={`w-full h-full object-cover transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] ${
+                  isPlaying
+                    ? 'filter blur-md scale-105 brightness-[0.42] contrast-125'
+                    : isHovered
+                    ? 'filter blur-0 scale-[1.02] brightness-95'
+                    : 'filter blur-0 scale-100 brightness-100'
+                }`}
+                referrerPolicy="no-referrer"
               />
+
+              {/* Dark subtle overlay when playing */}
+              <div
+                className={`absolute inset-0 bg-black/40 backdrop-blur-[2px] transition-opacity duration-700 pointer-events-none ${
+                  isPlaying ? 'opacity-100' : 'opacity-0'
+                }`}
+              />
+
+              {/* Album sleeve gloss highlight sheen */}
+              <div className="absolute inset-0 pointer-events-none opacity-20 mix-blend-overlay bg-gradient-to-tr from-transparent via-white/10 to-transparent" />
             </div>
 
-            {/* Minimalist status badge */}
-            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex items-center gap-2 font-mono text-[9px] sm:text-[10px] uppercase font-bold text-neutral-500 dark:text-neutral-400 bg-white/70 dark:bg-black/60 px-2 sm:px-2.5 py-1 border border-neutral-200 dark:border-white/10 backdrop-blur-sm">
-              <span className={`w-2 h-2 rounded-full ${isPlaying ? 'bg-emerald-500 animate-pulse' : 'bg-neutral-400'}`} />
-              {isPlaying ? '33 RPM PLAYING' : 'VINYL READY'}
+            {/* 2. Vinyl Disc Sliding Container (3-State Choreography) */}
+            {/*
+              State 1 (Idle): translate-y-[115%] (completely out of view at bottom, only cover image visible)
+              State 2 (Hover): translate-y-[50%] (top half of disc smoothly emerges from bottom)
+              State 3 (Playing): translate-y-0 (full disc centered, adjusts size, spins smoothly)
+            */}
+            <div
+              className={`absolute inset-0 flex items-center justify-center pointer-events-none transition-transform duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] z-10 ${
+                isPlaying
+                  ? 'translate-y-0'
+                  : isHovered
+                  ? 'translate-y-[50%]'
+                  : 'translate-y-[115%]'
+              }`}
+            >
+              <div
+                className={`w-[78%] sm:w-[80%] md:w-[82%] max-w-[420px] aspect-square transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] flex items-center justify-center ${
+                  isPlaying
+                    ? 'scale-100 opacity-100 drop-shadow-[0_25px_50px_rgba(0,0,0,0.9)]'
+                    : isHovered
+                    ? 'scale-[0.98] opacity-100 drop-shadow-[0_-12px_28px_rgba(0,0,0,0.7)]'
+                    : 'scale-90 opacity-0'
+                }`}
+              >
+                <VinylRecord
+                  size="full"
+                  isPlaying={isPlaying}
+                  title={kit.title}
+                  coverImage={kit.coverImage}
+                  showTonearm={false}
+                />
+              </div>
+            </div>
+
+            {/* 3. Status Badge in Top-Left */}
+            <div className="absolute top-3 left-3 sm:top-4 sm:left-4 z-20 flex items-center gap-2 font-mono text-[9px] sm:text-[10px] uppercase font-bold text-neutral-300 bg-black/80 px-2.5 py-1 border border-white/15 backdrop-blur-md shadow-md">
+              <span
+                className={`w-2 h-2 rounded-full transition-colors ${
+                  isPlaying
+                    ? 'bg-emerald-400 animate-pulse shadow-[0_0_8px_#34d399]'
+                    : isHovered
+                    ? 'bg-amber-400'
+                    : 'bg-neutral-500'
+                }`}
+              />
+              <span>
+                {isPlaying
+                  ? '33 RPM PLAYING'
+                  : isHovered
+                  ? 'CLIQUE PARA OUVIR'
+                  : 'SOUND KIT'}
+              </span>
+            </div>
+
+            {/* 4. Center Play/Pause Overlay Cue */}
+            <div
+              className={`absolute inset-0 z-20 flex items-center justify-center pointer-events-none transition-opacity duration-300 ${
+                isHovered || isPlaying ? 'opacity-100' : 'opacity-0'
+              }`}
+            >
+              {/* When hovered and not playing: show floating pill */}
+              {!isPlaying && isHovered && (
+                <div className="bg-black/85 text-white backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-2xl flex items-center gap-2 font-mono text-xs uppercase tracking-wider transform -translate-y-8 animate-fade-in">
+                  <Play className="w-3.5 h-3.5 fill-current text-white" />
+                  <span>Ouvir Prévia</span>
+                </div>
+              )}
+
+              {/* When playing: show pause button on hover */}
+              {isPlaying && isHovered && (
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-black/75 text-white backdrop-blur-md border border-white/20 shadow-2xl flex items-center justify-center animate-fade-in">
+                  <Pause className="w-6 h-6 fill-current" />
+                </div>
+              )}
             </div>
           </div>
 
@@ -250,9 +378,16 @@ export default function DetailsView({
 
           {/* Detailed Content Accordeon Layout (Wireframe table list) */}
           <div className="space-y-3 sm:space-y-4">
-            <h2 className="font-mono text-xs font-bold text-neutral-400 border-b border-neutral-200 dark:border-neutral-800 pb-2 uppercase tracking-widest">
-              Contents Breakdown
-            </h2>
+            <div className="flex items-center justify-between border-b border-neutral-200 dark:border-neutral-800 pb-2">
+              <h2 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest">
+                Contents Breakdown
+              </h2>
+              {kit.fileCount && (
+                <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 font-semibold">
+                  {kit.fileCount} Total Files
+                </span>
+              )}
+            </div>
             <ul className="grid grid-cols-1 sm:grid-cols-2 gap-y-2 sm:gap-y-3 gap-x-6 font-sans text-xs">
               {Object.entries(contents).map(([key, val]) => (
                 <li
