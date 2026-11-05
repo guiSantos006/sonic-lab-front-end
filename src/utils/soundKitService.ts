@@ -302,120 +302,20 @@ function getStoredMockKits(): SoundKitResponse[] {
   try {
     const saved = localStorage.getItem(MOCK_SOUNDKITS_KEY);
     if (saved) {
-      return JSON.parse(saved);
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) {
+        // Filter out legacy demo mock kits
+        const legacyMockIds = new Set(['mock-sk-001', 'mock-sk-002', 'mock-sk-003']);
+        const cleaned = parsed.filter((k: SoundKitResponse) => !legacyMockIds.has(k.id));
+        localStorage.setItem(MOCK_SOUNDKITS_KEY, JSON.stringify(cleaned));
+        return cleaned;
+      }
     }
   } catch {
     // ignore
   }
 
-  const initialMocks: SoundKitResponse[] = [
-    {
-      id: 'mock-sk-001',
-      title: 'INDUSTRIAL TENSION VOL. 1',
-      description: 'Analog modular textures, distorted 808s, and metallic percussions crafted on Eurorack hardware.',
-      price: 29.0,
-      creatorId: 'creator-void',
-      type: 'DRUM_KIT',
-      coverUrl: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?auto=format&fit=crop&q=80&w=600',
-      fileUrl: 'https://storage.soniclab.io/packages/industrial-tension-vol1.zip',
-      audioDemo: {
-        url: 'https://cdn.freesound.org/previews/415/415510_5121236-lq.mp3',
-        durationInSeconds: 105,
-        waveformData: generateWaveformData(),
-      },
-      tags: ['TECHNO', 'INDUSTRIAL', 'ANALOG', 'MODULAR'],
-      specifications: {
-        creator: 'ALEXANDER_VOID',
-        fileCount: '180',
-        fileSize: '480 MB',
-        sampleRate: '24-Bit / 44.1kHz',
-        format: 'WAV',
-      },
-      contents: {
-        'Analog Modular Kicks': 45,
-        'Distorted 808s': 30,
-        'Industrial Snares & Claps': 40,
-        'Metallic Percussion': 35,
-        'Noise Atmospheres': 30,
-      },
-      active: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'mock-sk-002',
-      title: 'ANALOG DRIFT TRAP DRUMS',
-      description: 'Heavy sub-bass kicks, punchy snares, and tape-saturated cymbals recorded via vintage reel-to-reel.',
-      price: 34.5,
-      creatorId: 'creator-void',
-      type: 'SAMPLE_PACK',
-      coverUrl: 'https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?auto=format&fit=crop&q=80&w=600',
-      fileUrl: 'https://storage.soniclab.io/packages/analog-drift-trap.zip',
-      audioDemo: {
-        url: 'https://cdn.freesound.org/previews/320/320181_5260872-lq.mp3',
-        durationInSeconds: 90,
-        waveformData: generateWaveformData(),
-      },
-      tags: ['TRAP', 'ANALOG', 'BASS', 'BOOM BAP'],
-      specifications: {
-        creator: 'SONIC_RESEARCH',
-        fileCount: '145',
-        fileSize: '620 MB',
-        sampleRate: '24-Bit / 48kHz',
-        format: 'WAV',
-      },
-      contents: {
-        'Sub-Bass 808 Glides': 35,
-        'Tape Saturated Snares': 35,
-        'Reel-to-Reel Hi-Hats': 40,
-        'Analog Melody Loops': 20,
-        'Percussion One-Shots': 15,
-      },
-      active: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-    {
-      id: 'mock-sk-003',
-      title: 'SERUM CYBERNETIC PRESETS',
-      description: 'Futuristic wavetables, morphing bass leads, and dystopian soundscapes for Xfer Serum.',
-      price: 24.0,
-      creatorId: 'creator-serum',
-      type: 'PRESET_BANK',
-      coverUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&q=80&w=600',
-      fileUrl: 'https://storage.soniclab.io/packages/serum-cybernetic.zip',
-      audioDemo: {
-        url: 'https://cdn.freesound.org/previews/612/612610_5674468-lq.mp3',
-        durationInSeconds: 78,
-        waveformData: generateWaveformData(),
-      },
-      tags: ['SERUM', 'SYNTHWAVE', 'PRESETS', 'TECHNO'],
-      specifications: {
-        creator: 'CYBER_AUDIO',
-        fileCount: '80',
-        fileSize: '85 MB',
-        sampleRate: 'Serum .fxp',
-        format: 'Presets',
-      },
-      contents: {
-        'Cyber Bass Leads': 30,
-        'Reese & Sub Basses': 25,
-        'Dystopian Soundscapes': 15,
-        'Custom Wavetables': 10,
-      },
-      active: true,
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    },
-  ];
-
-  try {
-    localStorage.setItem(MOCK_SOUNDKITS_KEY, JSON.stringify(initialMocks));
-  } catch {
-    // ignore
-  }
-
-  return initialMocks;
+  return [];
 }
 
 /**

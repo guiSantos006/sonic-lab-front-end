@@ -79,10 +79,43 @@ class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   }
 }
 
+// Legacy mock IDs to exclude
+const MOCK_KIT_IDS = new Set([
+  'industrial-tech-vol1',
+  'minimal-house-kit',
+  'raw-foundations',
+  'liquid-dnb-essentials',
+  'vintage-synth-chords',
+  'ethereal-voices',
+  'dust-tape-noise',
+  'serum-bass-archive',
+  'analog-keys-v2',
+  'industrial-tension-vol1',
+  'mock-sk-001',
+  'mock-sk-002',
+  'mock-sk-003',
+]);
+
+const isDemoMockKit = (k: Kit): boolean => {
+  if (MOCK_KIT_IDS.has(k.id)) return true;
+  const titleUpper = (k.title || '').trim().toUpperCase();
+  if (
+    titleUpper === 'INDUSTRIAL TENSION VOL. 1' ||
+    titleUpper === 'ANALOG DRIFT TRAP DRUMS' ||
+    titleUpper === 'SERUM CYBERNETIC PRESETS' ||
+    titleUpper.includes('INDUSTRIAL TENSION') ||
+    titleUpper.includes('ANALOG DRIFT') ||
+    titleUpper.includes('SERUM CYBERNETIC')
+  ) {
+    return true;
+  }
+  return false;
+};
+
 export default function App() {
   // Navigation States
   const [currentView, setCurrentView] = useState<ViewType>('home');
-  const [selectedKitId, setSelectedKitId] = useState<string>('industrial-tension-vol1');
+  const [selectedKitId, setSelectedKitId] = useState<string>('');
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
   const [loginSuccessNotice, setLoginSuccessNotice] = useState<string | null>(null);
 
@@ -96,7 +129,9 @@ export default function App() {
     apiSearchSoundKits({ page: 0, size: 20 })
       .then((res) => {
         if (res && res.content && res.content.length > 0) {
-          const backendKits = res.content.map(soundKitResponseToKit);
+          const backendKits = res.content
+            .map(soundKitResponseToKit)
+            .filter((k) => !isDemoMockKit(k));
           setKits((prev) => {
             const existingIds = new Set(prev.map((k) => k.id));
             const newKits = backendKits.filter((bk) => !existingIds.has(bk.id));
@@ -120,10 +155,23 @@ export default function App() {
     }
   });
 
-  // Master Sound Kits Lists (persisted in localStorage for functional completeness)
+  // Master Sound Kits Lists (purely user-uploaded / backend kits)
   const [kits, setKits] = useState<Kit[]>(() => {
-    const saved = localStorage.getItem('sonic_lab_kits');
-    return saved ? JSON.parse(saved) : INITIAL_KITS;
+    try {
+      const saved = localStorage.getItem('sonic_lab_kits');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // Filter out legacy demo kits
+          const userKits = parsed.filter((k: Kit) => !isDemoMockKit(k));
+          localStorage.setItem('sonic_lab_kits', JSON.stringify(userKits));
+          return userKits;
+        }
+      }
+    } catch {
+      // ignore
+    }
+    return [];
   });
 
   // Sync producer's kits from Spring Boot backend when logged in
@@ -132,7 +180,9 @@ export default function App() {
       apiGetMySoundKits(0, 50)
         .then((res) => {
           if (res && res.content && res.content.length > 0) {
-            const myKits = res.content.map(soundKitResponseToKit);
+            const myKits = res.content
+              .map(soundKitResponseToKit)
+              .filter((k) => !isDemoMockKit(k));
             setKits((prev) => {
               const existingIds = new Set(prev.map((k) => k.id));
               const newKits = myKits.filter((bk) => !existingIds.has(bk.id));
@@ -544,13 +594,26 @@ export default function App() {
                 )}
 
                 {currentView === 'details' && (
-                  <DetailsView
-                    kit={currentDetailsKit}
-                    onBack={() => handleNavigate('catalog')}
-                    onAddToCart={handleAddToCart}
-                    onBuyNow={handleExpressBuy}
-                    isInCart={cart.some((k) => k.id === currentDetailsKit.id)}
-                  />
+                  currentDetailsKit ? (
+                    <DetailsView
+                      kit={currentDetailsKit}
+                      onBack={() => handleNavigate('catalog')}
+                      onAddToCart={handleAddToCart}
+                      onBuyNow={handleExpressBuy}
+                      isInCart={cart.some((k) => k.id === currentDetailsKit.id)}
+                    />
+                  ) : (
+                    <div className="py-24 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-4">
+                      <h3 className="font-sans text-lg font-bold uppercase text-primary">Nenhum Sound Kit selecionado</h3>
+                      <p className="font-sans text-xs text-neutral-500 max-w-sm">Publique seus próprios kits na plataforma para visualizá-los e ouvi-los aqui.</p>
+                      <button
+                        onClick={() => handleNavigate('sell')}
+                        className="px-6 py-2.5 bg-black dark:bg-white text-white dark:text-black font-mono text-xs uppercase font-bold tracking-wider cursor-pointer"
+                      >
+                        + Publicar Primeiro Kit
+                      </button>
+                    </div>
+                  )
                 )}
 
                 {currentView === 'profile' && (
