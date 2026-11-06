@@ -553,7 +553,7 @@ export default function CatalogView({
                       <img
                         alt={item.title}
                         src={item.coverImage}
-                        className="w-full h-full object-cover grayscale opacity-95 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         referrerPolicy="no-referrer"
                       />
                       {/* Play/Pause Button Cue */}

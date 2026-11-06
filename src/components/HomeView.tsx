@@ -200,7 +200,7 @@ export default function HomeView({
                       <img
                         src={item.coverImage}
                         alt={item.title}
-                        className="w-full h-full object-cover grayscale opacity-95 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         referrerPolicy="no-referrer"
                       />
                       {idx === 0 && (
@@ -328,7 +328,7 @@ export default function HomeView({
                     <img
                       alt={item.title}
                       src={item.coverImage}
-                      className="w-full h-full object-cover grayscale group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       referrerPolicy="no-referrer"
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 dark:group-hover:bg-white/5 transition-colors" />

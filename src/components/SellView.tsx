@@ -824,7 +824,7 @@ export default function SellView({ onPublish, onNavigate, creatorName, isLoggedI
                     <img
                       src={coverPreviewUrl}
                       alt="PREVIEW"
-                      className="w-full h-full object-cover grayscale"
+                      className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <span className="font-mono text-[10px] text-white uppercase tracking-wider font-extrabold">

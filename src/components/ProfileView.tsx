@@ -164,7 +164,7 @@ export default function ProfileView({
             <img
               src={isEditing ? avatar : profile.avatar}
               alt={profile.name}
-              className={`w-full h-full object-cover transition-all grayscale duration-300 ${isEditing ? 'group-hover:opacity-40' : ''}`}
+              className={`w-full h-full object-cover transition-all duration-300 ${isEditing ? 'group-hover:opacity-40' : ''}`}
               referrerPolicy="no-referrer"
             />
             {isEditing && (
@@ -358,7 +358,7 @@ export default function ProfileView({
                         <img
                           src={item.coverImage}
                           alt={item.title}
-                          className="w-full h-full object-cover grayscale group-hover:scale-101 transition-transform"
+                          className="w-full h-full object-cover group-hover:scale-101 transition-transform"
                           referrerPolicy="no-referrer"
                         />
                       )}
@@ -431,7 +431,7 @@ export default function ProfileView({
                       <img
                         src={item.coverImage}
                         alt={item.title}
-                        className="w-full h-full object-cover grayscale"
+                        className="w-full h-full object-cover"
                         referrerPolicy="no-referrer"
                       />
                       <div className="absolute top-2 right-2 bg-black dark:bg-white text-white dark:text-black px-2 py-0.5 font-mono text-[9px] font-bold">

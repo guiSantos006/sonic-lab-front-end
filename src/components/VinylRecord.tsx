@@ -110,7 +110,7 @@ export default function VinylRecord({
             <img
               src={coverImage}
               alt={title}
-              className="absolute inset-0 w-full h-full object-cover opacity-65 grayscale hover:grayscale-0 transition-all"
+              className="absolute inset-0 w-full h-full object-cover opacity-80 hover:opacity-100 transition-opacity"
               referrerPolicy="no-referrer"
             />
           ) : (

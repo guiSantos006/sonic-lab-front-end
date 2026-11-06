@@ -138,7 +138,7 @@ export default function GlobalAudioPlayer({
             <img
               src={activeKit.coverImage}
               alt={activeKit.title}
-              className="w-full h-full object-cover grayscale"
+              className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
             {isPlaying && (
@@ -219,7 +219,7 @@ export default function GlobalAudioPlayer({
             <img
               src={activeKit.coverImage}
               alt={activeKit.title}
-              className="w-full h-full object-cover grayscale"
+              className="w-full h-full object-cover"
               referrerPolicy="no-referrer"
             />
             {isPlaying && (
