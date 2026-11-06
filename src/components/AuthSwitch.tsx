@@ -10,6 +10,7 @@ import {
   parseJwtPayload,
 } from '../utils/authService';
 import { useTheme } from '../context/ThemeContext';
+import { useLanguage } from '../context/LanguageContext';
 import ThemeToggle from './ThemeToggle';
 
 export type AuthMode = 'login' | 'register' | 'forgot-password' | 'reset-password';
@@ -46,6 +47,8 @@ export default function AuthSwitch({
   initialResetToken = null,
 }: AuthSwitchProps) {
   const { isDark } = useTheme();
+  const { t } = useLanguage();
+  const authT = t.auth;
 
   // Active Auth view mode
   const [authMode, setAuthMode] = useState<AuthMode>(() => {
@@ -181,24 +184,24 @@ export default function AuthSwitch({
     setActiveTooltipField(null);
 
     if (!resetToken.trim()) {
-      triggerValidationError('resetToken', 'Insira o token de recuperação.', resetTokenRef);
+      triggerValidationError('resetToken', authT.tokenRequired, resetTokenRef);
       return;
     }
     if (!resetPassword) {
-      triggerValidationError('resetPassword', 'Preencha a nova senha.', resetPasswordRef);
+      triggerValidationError('resetPassword', authT.fillNewPassword, resetPasswordRef);
       return;
     }
     const passCheck = validatePassword(resetPassword);
     if (!passCheck.valid) {
       triggerValidationError(
         'resetPassword',
-        passCheck.message || 'Mínimo de 8 caracteres (letras e números).',
+        passCheck.message || authT.passwordRequirements,
         resetPasswordRef
       );
       return;
     }
     if (resetPassword !== confirmPassword) {
-      triggerValidationError('confirmPassword', 'As senhas não coincidem.', confirmPasswordRef);
+      triggerValidationError('confirmPassword', authT.passwordsDoNotMatch, confirmPasswordRef);
       return;
     }
 
@@ -208,7 +211,7 @@ export default function AuthSwitch({
         token: resetToken.trim(),
         newPassword: resetPassword,
       });
-      setResetSuccess(responseMsg || 'Senha redefinida com sucesso!');
+      setResetSuccess(responseMsg || authT.passwordResetSuccess);
 
       try {
         window.history.replaceState({}, '', window.location.pathname);
@@ -218,7 +221,7 @@ export default function AuthSwitch({
 
       setTimeout(() => {
         setResetLoading(false);
-        setLoginSuccess('Senha redefinida com sucesso! Faça login com sua nova senha.');
+        setLoginSuccess(authT.passwordResetLoginPrompt);
         setAuthMode('login');
       }, 1500);
     } catch (err: unknown) {
@@ -236,15 +239,15 @@ export default function AuthSwitch({
     setActiveTooltipField(null);
 
     if (!loginEmail.trim()) {
-      triggerValidationError('loginEmail', 'Preencha este campo.', loginEmailRef);
+      triggerValidationError('loginEmail', authT.fillThisField, loginEmailRef);
       return;
     }
     if (!loginEmail.includes('@')) {
-      triggerValidationError('loginEmail', 'Insira um endereço de e-mail válido.', loginEmailRef);
+      triggerValidationError('loginEmail', authT.validEmailRequired, loginEmailRef);
       return;
     }
     if (!loginPassword) {
-      triggerValidationError('loginPassword', 'Preencha este campo.', loginPasswordRef);
+      triggerValidationError('loginPassword', authT.fillThisField, loginPasswordRef);
       return;
     }
 
@@ -270,7 +273,7 @@ export default function AuthSwitch({
         (Array.isArray(jwtData?.roles) ? jwtData.roles.join(', ') : '') ||
         'SOUND DESIGNER';
 
-      setLoginSuccess('Logado com Êxito');
+      setLoginSuccess(authT.loggedInSuccess);
 
       setTimeout(() => {
         setLoginLoading(false);
@@ -297,26 +300,26 @@ export default function AuthSwitch({
     setActiveTooltipField(null);
 
     if (!regName.trim()) {
-      triggerValidationError('regName', 'Preencha este campo.', regNameRef);
+      triggerValidationError('regName', authT.fillThisField, regNameRef);
       return;
     }
     if (!regEmail.trim()) {
-      triggerValidationError('regEmail', 'Preencha este campo.', regEmailRef);
+      triggerValidationError('regEmail', authT.fillThisField, regEmailRef);
       return;
     }
     if (!regEmail.includes('@')) {
-      triggerValidationError('regEmail', 'Insira um endereço de e-mail válido.', regEmailRef);
+      triggerValidationError('regEmail', authT.validEmailRequired, regEmailRef);
       return;
     }
     if (!regPassword) {
-      triggerValidationError('regPassword', 'Preencha este campo.', regPasswordRef);
+      triggerValidationError('regPassword', authT.fillThisField, regPasswordRef);
       return;
     }
     const passCheck = validatePassword(regPassword);
     if (!passCheck.valid) {
       triggerValidationError(
         'regPassword',
-        passCheck.message || 'Mínimo de 8 caracteres (letras e números).',
+        passCheck.message || authT.passwordRequirements,
         regPasswordRef
       );
       return;
@@ -331,7 +334,7 @@ export default function AuthSwitch({
         password: regPassword,
       });
 
-      setRegSuccess('Usuário cadastrado com sucesso no back-end! Redirecionando...');
+      setRegSuccess(authT.userRegisteredSuccess);
 
       setTimeout(() => {
         setRegLoading(false);
@@ -339,7 +342,7 @@ export default function AuthSwitch({
           onRegisterSuccess(regEmail.trim());
         }
         setLoginEmail(regEmail.trim());
-        setLoginSuccess('Cadastro realizado! Digite sua senha para entrar.');
+        setLoginSuccess(authT.registrationSuccessPrompt);
         setIsSignUp(false);
       }, 700);
     } catch (err: unknown) {
@@ -413,7 +416,7 @@ export default function AuthSwitch({
           className="absolute top-6 left-6 z-20 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-neutral-600 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer py-1.5 px-3 rounded-none bg-white/40 dark:bg-black/40 backdrop-blur-md border border-neutral-300/60 dark:border-white/10"
         >
           <ChevronLeft className="w-4 h-4" />
-          <span>Home</span>
+          <span>{authT.home}</span>
         </button>
         <div className="absolute top-6 right-6 z-20">
           <ThemeToggle className="p-2 text-neutral-800 dark:text-white bg-white/40 dark:bg-black/40 backdrop-blur-md border border-neutral-300/60 dark:border-white/10" />
@@ -427,7 +430,7 @@ export default function AuthSwitch({
               <UserIcon className="w-8 h-8 text-neutral-400" />
             )}
           </div>
-          <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">Sessão Ativa</span>
+          <span className="font-mono text-[10px] uppercase tracking-widest text-neutral-400">{authT.activeSession}</span>
           <h2 className="font-mono text-xl font-bold uppercase tracking-tight text-neutral-900 dark:text-white mt-1">
             {currentProfile.name}
           </h2>
@@ -438,7 +441,7 @@ export default function AuthSwitch({
               onClick={() => onNavigate('profile')}
               className="w-full py-2.5 bg-neutral-900 hover:bg-black dark:bg-white dark:hover:bg-neutral-200 text-white dark:text-black font-mono text-xs uppercase tracking-wider font-bold transition-all cursor-pointer flex items-center justify-center gap-2 shadow-md"
             >
-              <span>Acessar Meu Perfil</span>
+              <span>{authT.goToProfile}</span>
               <ArrowRight className="w-4 h-4" />
             </button>
             {onLogout && (
@@ -446,14 +449,14 @@ export default function AuthSwitch({
                 onClick={onLogout}
                 className="w-full py-2.5 border border-neutral-300 dark:border-neutral-700 text-neutral-700 dark:text-neutral-300 font-mono text-xs uppercase tracking-wider hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
               >
-                Sair da Conta
+                {authT.signOut}
               </button>
             )}
             <button
               onClick={() => onNavigate('catalog')}
               className="w-full py-2 text-neutral-500 hover:text-black dark:hover:text-white font-mono text-xs uppercase tracking-wider transition-colors cursor-pointer"
             >
-              Voltar ao Catálogo
+              {t.nav.catalog}
             </button>
           </div>
         </div>
@@ -1167,10 +1170,10 @@ export default function AuthSwitch({
           type="button"
           onClick={() => onNavigate('home')}
           className="absolute top-6 left-6 z-20 inline-flex items-center gap-1.5 font-mono text-xs uppercase tracking-wider text-neutral-700 dark:text-neutral-300 hover:text-black dark:hover:text-white transition-colors cursor-pointer py-1.5 px-3 rounded-none bg-white/40 dark:bg-black/40 backdrop-blur-md border border-neutral-300/60 dark:border-white/10"
-          title="Voltar ao início"
+          title={authT.home}
         >
           <ChevronLeft className="w-4 h-4" />
-          <span>Home</span>
+          <span>{authT.home}</span>
         </button>
       )}
 
@@ -1188,8 +1191,8 @@ export default function AuthSwitch({
             type="button"
             onClick={onClose}
             className="absolute top-3.5 right-3.5 z-30 p-2 rounded-full text-neutral-500 hover:text-black dark:hover:text-white bg-white/80 dark:bg-[#1a1d25]/80 hover:bg-white dark:hover:bg-[#252830] transition-colors cursor-pointer border border-neutral-200 dark:border-neutral-700 shadow-sm"
-            title="Fechar"
-            aria-label="Fechar modal de autenticação"
+            title={authT.close}
+            aria-label={authT.close}
           >
             <X className="w-4 h-4" />
           </button>
@@ -1219,12 +1222,12 @@ export default function AuthSwitch({
                   className="mb-3 self-start flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Voltar ao login</span>
+                  <span>{authT.backToLogin}</span>
                 </button>
 
-                <h2 className="title">Recuperação</h2>
+                <h2 className="title">{authT.recoveryTitle}</h2>
                 <p className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 text-center mb-3 max-w-[340px]">
-                  Insira seu e-mail cadastrado para receber as instruções de redefinição via Mailtrap.
+                  {authT.recoveryDesc}
                 </p>
 
                 {forgotError && (
@@ -1246,7 +1249,7 @@ export default function AuthSwitch({
                     <input
                       ref={forgotEmailRef}
                       type="email"
-                      placeholder="Email cadastrado"
+                      placeholder={authT.registeredEmailPlaceholder}
                       value={forgotEmail}
                       onChange={(e) => {
                         setForgotEmail(e.target.value);
@@ -1270,13 +1273,13 @@ export default function AuthSwitch({
 
                 <input
                   type="submit"
-                  value={forgotLoading ? 'Enviando...' : 'Enviar Link'}
+                  value={forgotLoading ? authT.sending : authT.sendResetLink}
                   className="btn solid"
                   disabled={forgotLoading}
                 />
 
                 <div className="mt-3 flex items-center justify-center gap-1.5">
-                  <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">Já tem um token?</span>
+                  <span className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400">{authT.alreadyHaveToken}</span>
                   <button
                     type="button"
                     onClick={() => {
@@ -1286,7 +1289,7 @@ export default function AuthSwitch({
                     }}
                     className="font-mono text-[11px] underline text-neutral-800 dark:text-neutral-200 hover:text-black dark:hover:text-white cursor-pointer font-bold"
                   >
-                    Redefinir senha aqui
+                    {authT.resetPasswordHere}
                   </button>
                 </div>
               </form>
@@ -1302,12 +1305,12 @@ export default function AuthSwitch({
                   className="mb-3 self-start flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-wider text-neutral-500 hover:text-black dark:hover:text-white transition-colors cursor-pointer"
                 >
                   <ArrowLeft className="w-3.5 h-3.5" />
-                  <span>Voltar ao login</span>
+                  <span>{authT.backToLogin}</span>
                 </button>
 
-                <h2 className="title">Nova Senha</h2>
+                <h2 className="title">{authT.newPasswordTitle}</h2>
                 <p className="font-mono text-[11px] text-neutral-500 dark:text-neutral-400 text-center mb-3 max-w-[340px]">
-                  Crie uma nova senha de no mínimo 8 caracteres (com letras e números).
+                  {authT.newPasswordDesc}
                 </p>
 
                 {resetError && (
@@ -1329,7 +1332,7 @@ export default function AuthSwitch({
                     <input
                       ref={resetTokenRef}
                       type="text"
-                      placeholder="Token recebido por e-mail"
+                      placeholder={authT.tokenPlaceholder}
                       value={resetToken}
                       onChange={(e) => {
                         setResetToken(e.target.value);
@@ -1356,7 +1359,7 @@ export default function AuthSwitch({
                     <input
                       ref={resetPasswordRef}
                       type={showResetPassword ? 'text' : 'password'}
-                      placeholder="Nova senha (mín. 8 caracteres)"
+                      placeholder={authT.newPasswordPlaceholder}
                       value={resetPassword}
                       onChange={(e) => {
                         setResetPassword(e.target.value);
@@ -1372,8 +1375,8 @@ export default function AuthSwitch({
                       type="button"
                       onClick={() => setShowResetPassword(!showResetPassword)}
                       className="toggle-password-btn"
-                      title={showResetPassword ? 'Ocultar senha' : 'Ver senha'}
-                      aria-label={showResetPassword ? 'Ocultar senha' : 'Ver senha'}
+                      title={showResetPassword ? authT.hidePassword : authT.showPassword}
+                      aria-label={showResetPassword ? authT.hidePassword : authT.showPassword}
                     >
                       {showResetPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -1393,7 +1396,7 @@ export default function AuthSwitch({
                     <input
                       ref={confirmPasswordRef}
                       type={showConfirmPassword ? 'text' : 'password'}
-                      placeholder="Confirmar nova senha"
+                      placeholder={authT.confirmPasswordPlaceholder}
                       value={confirmPassword}
                       onChange={(e) => {
                         setConfirmPassword(e.target.value);
@@ -1409,8 +1412,8 @@ export default function AuthSwitch({
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                       className="toggle-password-btn"
-                      title={showConfirmPassword ? 'Ocultar senha' : 'Ver senha'}
-                      aria-label={showConfirmPassword ? 'Ocultar senha' : 'Ver senha'}
+                      title={showConfirmPassword ? authT.hidePassword : authT.showPassword}
+                      aria-label={showConfirmPassword ? authT.hidePassword : authT.showPassword}
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -1426,14 +1429,14 @@ export default function AuthSwitch({
 
                 <input
                   type="submit"
-                  value={resetLoading ? 'Salvando...' : 'Salvar Nova Senha'}
+                  value={resetLoading ? authT.saving : authT.saveNewPassword}
                   className="btn solid"
                   disabled={resetLoading}
                 />
               </form>
             ) : (
               <form className="sign-in-form" noValidate onSubmit={handleSignIn}>
-                <h2 className="title">Sign in</h2>
+                <h2 className="title">{authT.signInTitle}</h2>
 
                 {loginError && (
                   <div className="alert-box alert-error">
@@ -1454,7 +1457,7 @@ export default function AuthSwitch({
                     <input
                       ref={loginEmailRef}
                       type="email"
-                      placeholder="Email"
+                      placeholder={authT.emailPlaceholder}
                       value={loginEmail}
                       onChange={(e) => {
                         setLoginEmail(e.target.value);
@@ -1482,7 +1485,7 @@ export default function AuthSwitch({
                     <input
                       ref={loginPasswordRef}
                       type={showLoginPassword ? 'text' : 'password'}
-                      placeholder="Password"
+                      placeholder={authT.passwordPlaceholder}
                       value={loginPassword}
                       onChange={(e) => {
                         setLoginPassword(e.target.value);
@@ -1498,8 +1501,8 @@ export default function AuthSwitch({
                       type="button"
                       onClick={() => setShowLoginPassword(!showLoginPassword)}
                       className="toggle-password-btn"
-                      title={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
-                      aria-label={showLoginPassword ? 'Ocultar senha' : 'Ver senha'}
+                      title={showLoginPassword ? authT.hidePassword : authT.showPassword}
+                      aria-label={showLoginPassword ? authT.hidePassword : authT.showPassword}
                     >
                       {showLoginPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -1526,27 +1529,27 @@ export default function AuthSwitch({
                     }}
                     className="forgot-password-link"
                   >
-                    Forgot password?
+                    {authT.forgotPasswordLink}
                   </button>
                 </div>
 
                 <input
                   type="submit"
-                  value={loginLoading ? 'Autenticando via API...' : 'Login'}
+                  value={loginLoading ? authT.loginLoading : authT.loginButton}
                   className="btn solid"
                   disabled={loginLoading}
                 />
 
-                <p className="social-text">Or sign in with Google</p>
+                <p className="social-text">{authT.orSignInWithGoogle}</p>
                 <div className="social-media">
-                  <SocialIcons onSelect={handleSocialAction} isDark={isDark} />
+                  <SocialIcons onSelect={handleSocialAction} isDark={isDark} title={authT.continueWithGoogle} />
                 </div>
               </form>
             )}
 
             {/* Sign Up Form */}
             <form className="sign-up-form" noValidate onSubmit={handleSignUp}>
-              <h2 className="title">Sign up</h2>
+              <h2 className="title">{authT.signUpTitle}</h2>
 
               {regError && (
                 <div className="alert-box alert-error">
@@ -1567,7 +1570,7 @@ export default function AuthSwitch({
                   <input
                     ref={regNameRef}
                     type="text"
-                    placeholder="Producer / Username"
+                    placeholder={authT.producerOrUsernamePlaceholder}
                     value={regName}
                     onChange={(e) => {
                       setRegName(e.target.value);
@@ -1594,7 +1597,7 @@ export default function AuthSwitch({
                   <input
                     ref={regEmailRef}
                     type="email"
-                    placeholder="Email"
+                    placeholder={authT.emailPlaceholder}
                     value={regEmail}
                     onChange={(e) => {
                       setRegEmail(e.target.value);
@@ -1622,7 +1625,7 @@ export default function AuthSwitch({
                   <input
                     ref={regPasswordRef}
                     type={showRegPassword ? 'text' : 'password'}
-                    placeholder="Password"
+                    placeholder={authT.passwordPlaceholder}
                     value={regPassword}
                     onChange={(e) => {
                       setRegPassword(e.target.value);
@@ -1638,8 +1641,8 @@ export default function AuthSwitch({
                     type="button"
                     onClick={() => setShowRegPassword(!showRegPassword)}
                     className="toggle-password-btn"
-                    title={showRegPassword ? 'Ocultar senha' : 'Ver senha'}
-                    aria-label={showRegPassword ? 'Ocultar senha' : 'Ver senha'}
+                    title={showRegPassword ? authT.hidePassword : authT.showPassword}
+                    aria-label={showRegPassword ? authT.hidePassword : authT.showPassword}
                   >
                     {showRegPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -1655,14 +1658,14 @@ export default function AuthSwitch({
 
               <input
                 type="submit"
-                value={regLoading ? 'Cadastrando via API...' : 'Sign up'}
+                value={regLoading ? authT.signUpLoading : authT.signUpButton}
                 className="btn"
                 disabled={regLoading}
               />
 
-              <p className="social-text">Or sign up with Google</p>
+              <p className="social-text">{authT.orSignUpWithGoogle}</p>
               <div className="social-media">
-                <SocialIcons onSelect={handleSocialAction} isDark={isDark} />
+                <SocialIcons onSelect={handleSocialAction} isDark={isDark} title={authT.continueWithGoogle} />
               </div>
             </form>
           </div>
@@ -1672,11 +1675,8 @@ export default function AuthSwitch({
         <div className="panels-container">
           <div className="panel left-panel">
             <div className="content">
-              <h3>New here?</h3>
-              <p>
-                Join us today and discover a world of possibilities. Create your
-                account in seconds!
-              </p>
+              <h3>{authT.newHereTitle}</h3>
+              <p>{authT.newHereDesc}</p>
               <button
                 type="button"
                 className="btn transparent"
@@ -1686,15 +1686,15 @@ export default function AuthSwitch({
                   setIsSignUp(true);
                 }}
               >
-                Sign up
+                {authT.signUpButton}
               </button>
             </div>
           </div>
 
           <div className="panel right-panel">
             <div className="content">
-              <h3>One of us?</h3>
-              <p>Welcome back! Sign in to continue your journey with us.</p>
+              <h3>{authT.oneOfUsTitle}</h3>
+              <p>{authT.oneOfUsDesc}</p>
               <button
                 type="button"
                 className="btn transparent"
@@ -1704,7 +1704,7 @@ export default function AuthSwitch({
                   setIsSignUp(false);
                 }}
               >
-                Sign in
+                {authT.signInTitle}
               </button>
             </div>
           </div>
@@ -1875,9 +1875,11 @@ function VinylGroovesSVG({ isDark }: { isDark: boolean }) {
 function SocialIcons({
   onSelect,
   isDark = false,
+  title = 'Google',
 }: {
   onSelect?: (provider: string) => void;
   isDark?: boolean;
+  title?: string;
 }) {
   return (
     <>
@@ -1885,7 +1887,7 @@ function SocialIcons({
         type="button"
         onClick={() => onSelect?.('Google')}
         className="social-icon"
-        title="Continue with Google"
+        title={title}
       >
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
           <path

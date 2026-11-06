@@ -4,18 +4,24 @@ import React, { useState, useMemo, useEffect } from 'react';
 import VinylRecord from './VinylRecord';
 import { audioPlayer } from '../utils/audioPlayer';
 import { apiGetSoundKitTags } from '../utils/soundKitService';
+import { useLanguage } from '../context/LanguageContext';
 
 interface CatalogViewProps {
   kits: Kit[];
   onSelectKit: (id: string) => void;
   onAddToCart: (kit: Kit) => void;
+  initialCategory?: 'drum_kit' | 'sample_pack' | 'preset_bank' | 'all';
+  initialTag?: string | null;
 }
 
 export default function CatalogView({
   kits,
   onSelectKit,
-  onAddToCart
+  onAddToCart,
+  initialCategory = 'all',
+  initialTag = null,
 }: CatalogViewProps) {
+  const { t } = useLanguage();
   // Audio playback state
   const [playingId, setPlayingId] = useState<string | null>(null);
 
@@ -60,15 +66,24 @@ export default function CatalogView({
   // Filter States
   const [search, setSearch] = useState('');
   const [categories, setCategories] = useState({
-    drum_kit: true,
-    sample_pack: true,
-    preset_bank: false
+    drum_kit: initialCategory === 'all' || initialCategory === 'drum_kit',
+    sample_pack: initialCategory === 'all' || initialCategory === 'sample_pack',
+    preset_bank: initialCategory === 'all' || initialCategory === 'preset_bank',
   });
-  const [styles, setStyles] = useState({
-    trap: false,
-    lofi: false,
-    techno: true
-  });
+
+  // Keep categories in sync if initialCategory prop changes
+  useEffect(() => {
+    if (initialCategory === 'all') {
+      setCategories({ drum_kit: true, sample_pack: true, preset_bank: true });
+    } else {
+      setCategories({
+        drum_kit: initialCategory === 'drum_kit',
+        sample_pack: initialCategory === 'sample_pack',
+        preset_bank: initialCategory === 'preset_bank',
+      });
+    }
+  }, [initialCategory]);
+
   const [minPrice, setMinPrice] = useState<string>('');
   const [maxPrice, setMaxPrice] = useState<string>('');
   const [sortBy, setSortBy] = useState<'default' | 'priceAsc' | 'priceDesc' | 'title'>('default');
@@ -77,9 +92,18 @@ export default function CatalogView({
   // Mobile filters accordion toggle
   const [isMobileFiltersOpen, setIsMobileFiltersOpen] = useState(false);
 
-  // Dynamic tags loaded from backend API (GET /soundkits/tags)
+  // Dynamic tags from backend API and actual kits loaded
   const [backendTags, setBackendTags] = useState<string[]>([]);
-  const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  // Multi-select active tags from soundkits (Item 2: substituir os gêneros pelas tags dos soundkits)
+  const [selectedTags, setSelectedTags] = useState<string[]>(() => {
+    return initialTag ? [initialTag.toUpperCase()] : [];
+  });
+
+  useEffect(() => {
+    if (initialTag) {
+      setSelectedTags([initialTag.toUpperCase()]);
+    }
+  }, [initialTag]);
 
   useEffect(() => {
     apiGetSoundKitTags()
@@ -89,27 +113,41 @@ export default function CatalogView({
       .catch(() => {});
   }, []);
 
+  // Compute all unique tags available across current sound kits and backend
+  const allAvailableTags = useMemo(() => {
+    const tagSet = new Set<string>();
+    kits.forEach((k) => {
+      (k.tags || []).forEach((t) => {
+        if (t && typeof t === 'string') {
+          tagSet.add(t.trim().toUpperCase());
+        }
+      });
+    });
+    backendTags.forEach((t) => {
+      if (t) tagSet.add(t.trim().toUpperCase());
+    });
+    return Array.from(tagSet).sort();
+  }, [kits, backendTags]);
+
   // Toggle handlers
   const handleCategoryToggle = (cat: 'drum_kit' | 'sample_pack' | 'preset_bank') => {
     setCategories((prev) => ({
       ...prev,
-      [cat]: !prev[cat]
+      [cat]: !prev[cat],
     }));
   };
 
-  const handleStyleToggle = (style: 'trap' | 'lofi' | 'techno') => {
-    setStyles((prev) => ({
-      ...prev,
-      [style]: !prev[style]
-    }));
+  const handleTagToggle = (tagUpper: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tagUpper) ? prev.filter((t) => t !== tagUpper) : [...prev, tagUpper]
+    );
   };
 
   // Clear filters
   const resetFilters = () => {
     setSearch('');
     setCategories({ drum_kit: true, sample_pack: true, preset_bank: true });
-    setStyles({ trap: false, lofi: false, techno: false });
-    setSelectedTag(null);
+    setSelectedTags([]);
     setMinPrice('');
     setMaxPrice('');
     setSortBy('default');
@@ -119,9 +157,11 @@ export default function CatalogView({
   const filteredKits = useMemo(() => {
     return kits
       .filter((kit) => {
-        // Tag chip filter from backend
-        if (selectedTag) {
-          if (!kit.tags.some((t) => t.toUpperCase() === selectedTag.toUpperCase())) {
+        // Tag chip filter: match any of the selected soundkit tags if user picked any
+        if (selectedTags.length > 0) {
+          const kitTagsUpper = (kit.tags || []).map((t) => t.toUpperCase());
+          const hasMatchingTag = selectedTags.some((selected) => kitTagsUpper.includes(selected));
+          if (!hasMatchingTag) {
             return false;
           }
         }
@@ -131,7 +171,7 @@ export default function CatalogView({
         if (search) {
           const titleMatches = kit.title.toLowerCase().includes(q);
           const creatorMatches = kit.creator.toLowerCase().includes(q);
-          const tagMatches = kit.tags.some((t) => t.toLowerCase().includes(q));
+          const tagMatches = (kit.tags || []).some((t) => t.toLowerCase().includes(q));
           if (!titleMatches && !creatorMatches && !tagMatches) return false;
         }
 
@@ -141,15 +181,6 @@ export default function CatalogView({
           if (kit.category === 'drum_kit' && !categories.drum_kit) return false;
           if (kit.category === 'sample_pack' && !categories.sample_pack) return false;
           if (kit.category === 'preset_bank' && !categories.preset_bank) return false;
-        }
-
-        // Style taxonomy Filter (Techno, Lo-fi, Trap)
-        const hasSelectedStyle = styles.trap || styles.lofi || styles.techno;
-        if (hasSelectedStyle) {
-          const kitTagsUpper = kit.tags.map((t) => t.toUpperCase());
-          if (styles.trap && !kitTagsUpper.includes('TRAP')) return false;
-          if (styles.lofi && !kitTagsUpper.includes('LO-FI') && !kitTagsUpper.includes('LOFI')) return false;
-          if (styles.techno && !kitTagsUpper.includes('TECHNO')) return false;
         }
 
         // Price boundaries limit
@@ -166,7 +197,7 @@ export default function CatalogView({
         if (sortBy === 'title') return a.title.localeCompare(b.title);
         return 0; // Default
       });
-  }, [kits, search, categories, styles, minPrice, maxPrice, sortBy]);
+  }, [kits, search, categories, selectedTags, minPrice, maxPrice, sortBy]);
 
   const displayedKits = filteredKits.slice(0, visibleCount);
 
@@ -183,10 +214,10 @@ export default function CatalogView({
         {/* Decorative desktop heading */}
         <div className="hidden md:block">
           <h1 className="font-sans text-5xl font-extrabold tracking-tighter mb-1 text-primary uppercase">
-            Catalog
+            {t.catalog.title}
           </h1>
           <p className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest leading-none">
-            Filter all modular sound packages
+            {t.catalog.allCategories}
           </p>
         </div>
 
@@ -195,7 +226,7 @@ export default function CatalogView({
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-neutral-400 group-focus-within:text-black dark:group-focus-within:text-white transition-colors" />
           <input
             type="text"
-            placeholder="Search audio stamps..."
+            placeholder={t.catalog.searchPlaceholder}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-black dark:text-white focus:border-black dark:focus:border-white focus:bg-white dark:focus:bg-neutral-900 pl-10 pr-3 py-2.5 font-sans text-xs transition-all outline-none"
@@ -211,17 +242,17 @@ export default function CatalogView({
           >
             <span className="flex items-center gap-1.5">
               <SlidersHorizontal className="w-3.5 h-3.5" />
-              <span>Filtros & Categorias</span>
+              <span>{t.catalog.filters}</span>
             </span>
             <span className="text-[10px] text-neutral-500 font-bold">
-              {isMobileFiltersOpen ? '▲ Fechar' : '▼ Expandir'}
+              {isMobileFiltersOpen ? '▲' : '▼'}
             </span>
           </button>
           <button
             type="button"
             onClick={resetFilters}
             className="py-2.5 px-3 border border-neutral-200 dark:border-neutral-800 font-mono text-xs text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer"
-            title="Limpar filtros"
+            title={t.catalog.clearFilters}
           >
             <FilterX className="w-3.5 h-3.5" />
           </button>
@@ -233,7 +264,7 @@ export default function CatalogView({
         {/* Categorias Block */}
         <section className="flex flex-col gap-3">
           <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest pb-1 border-b border-neutral-200 dark:border-neutral-800">
-            Category
+            {t.catalog.category}
           </h3>
           <div className="flex flex-col gap-2">
             <label className="flex items-center gap-3 cursor-pointer group">
@@ -302,83 +333,41 @@ export default function CatalogView({
           </div>
         </section>
 
-        {/* Style selection checkboxes */}
+        {/* SoundKit Tags filter (Replacing static genres with actual soundkit tags) */}
         <section className="flex flex-col gap-3">
-          <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest pb-1 border-b border-neutral-200 dark:border-neutral-800">
-            Style / Genre
-          </h3>
-          <div className="flex flex-col gap-2">
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={styles.trap}
-                onChange={() => handleStyleToggle('trap')}
-                className="w-4 h-4 rounded-none border-black dark:border-neutral-500 text-black dark:text-white focus:ring-0 focus:ring-offset-0 cursor-pointer"
-              />
-              <span className="font-sans text-xs text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white transition-colors">
-                Trap
-              </span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={styles.lofi}
-                onChange={() => handleStyleToggle('lofi')}
-                className="w-4 h-4 rounded-none border-black dark:border-neutral-500 text-black dark:text-white focus:ring-0 focus:ring-offset-0 cursor-pointer"
-              />
-              <span className="font-sans text-xs text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white transition-colors">
-                Lo-Fi
-              </span>
-            </label>
-            <label className="flex items-center gap-3 cursor-pointer group">
-              <input
-                type="checkbox"
-                checked={styles.techno}
-                onChange={() => handleStyleToggle('techno')}
-                className="w-4 h-4 rounded-none border-black dark:border-neutral-500 text-black dark:text-white focus:ring-0 focus:ring-offset-0 cursor-pointer"
-              />
-              <span className="font-sans text-xs text-neutral-700 dark:text-neutral-300 group-hover:text-black dark:group-hover:text-white transition-colors">
-                Techno
-              </span>
-            </label>
-          </div>
-        </section>
-
-        {/* Sorting drop container */}
-        <section className="flex flex-col gap-3">
-          <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest pb-1 border-b border-neutral-200 dark:border-neutral-800">
-            Sort By
-          </h3>
-          <select
-            value={sortBy}
-            onChange={(e: any) => setSortBy(e.target.value)}
-            className="w-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-black dark:text-white focus:border-black dark:focus:border-white p-2 font-mono text-xs outline-none cursor-pointer"
-          >
-            <option value="default">Default</option>
-            <option value="priceAsc">Price: Low to High</option>
-            <option value="priceDesc">Price: High to Low</option>
-            <option value="title">Alphabetical</option>
-          </select>
-        </section>
-
-        {/* Dynamic Tags from Spring Boot Backend (GET /soundkits/tags) */}
-        {backendTags.length > 0 && (
-          <section className="flex flex-col gap-3">
-            <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest pb-1 border-b border-neutral-200 dark:border-neutral-800 flex items-center justify-between">
-              <span>Tags da API</span>
-              <span className="text-[9px] text-emerald-500 font-bold">MÓDULO 2</span>
+          <div className="flex items-center justify-between pb-1 border-b border-neutral-200 dark:border-neutral-800">
+            <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest flex items-center gap-1.5">
+              <Tag className="w-3.5 h-3.5" />
+              <span>Tags dos SoundKits</span>
             </h3>
-            <div className="flex flex-wrap gap-1.5">
-              {backendTags.map((tag) => {
-                const isSelected = selectedTag === tag;
+            {selectedTags.length > 0 && (
+              <button
+                type="button"
+                onClick={() => setSelectedTags([])}
+                className="font-mono text-[9px] uppercase text-neutral-500 hover:text-primary underline cursor-pointer"
+              >
+                Limpar ({selectedTags.length})
+              </button>
+            )}
+          </div>
+
+          {allAvailableTags.length === 0 ? (
+            <p className="font-mono text-[11px] text-neutral-400">
+              Nenhuma tag disponível no momento.
+            </p>
+          ) : (
+            <div className="flex flex-wrap gap-1.5 max-h-[220px] overflow-y-auto pr-1">
+              {allAvailableTags.map((tag) => {
+                const isSelected = selectedTags.includes(tag);
                 return (
                   <button
                     key={tag}
-                    onClick={() => setSelectedTag(isSelected ? null : tag)}
-                    className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold tracking-wider transition-colors cursor-pointer ${
+                    type="button"
+                    onClick={() => handleTagToggle(tag)}
+                    className={`px-2.5 py-1 text-[10px] font-mono font-bold tracking-wider transition-all cursor-pointer border ${
                       isSelected
-                        ? 'bg-black dark:bg-white text-white dark:text-black border border-transparent'
-                        : 'bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-black dark:hover:text-white border border-neutral-200 dark:border-neutral-700'
+                        ? 'bg-black dark:bg-white text-white dark:text-black border-black dark:border-white shadow-xs'
+                        : 'bg-neutral-100 dark:bg-neutral-800/70 text-neutral-600 dark:text-neutral-400 border-neutral-200 dark:border-neutral-700/80 hover:border-black dark:hover:border-white hover:text-black dark:hover:text-white'
                     }`}
                   >
                     #{tag}
@@ -386,8 +375,26 @@ export default function CatalogView({
                 );
               })}
             </div>
-          </section>
-        )}
+          )}
+        </section>
+
+        {/* Sorting drop container */}
+        <section className="flex flex-col gap-3">
+          <h3 className="font-mono text-xs font-bold text-neutral-400 uppercase tracking-widest pb-1 border-b border-neutral-200 dark:border-neutral-800 flex items-center gap-1.5">
+            <ArrowUpDown className="w-3.5 h-3.5" />
+            <span>Ordenar Por</span>
+          </h3>
+          <select
+            value={sortBy}
+            onChange={(e: any) => setSortBy(e.target.value)}
+            className="w-full bg-neutral-100 dark:bg-neutral-900 border border-neutral-200 dark:border-neutral-800 text-black dark:text-white focus:border-black dark:focus:border-white p-2 font-mono text-xs outline-none cursor-pointer"
+          >
+            <option value="default">Padrão (Recomendados)</option>
+            <option value="priceAsc">Menor Preço</option>
+            <option value="priceDesc">Maior Preço</option>
+            <option value="title">Ordem Alfabética</option>
+          </select>
+        </section>
 
         {/* Reset Filter Button */}
         <button
@@ -424,6 +431,70 @@ export default function CatalogView({
           </div>
         </div>
 
+        {/* Active Filters Pill Bar (Categories and SoundKit Tags) */}
+        {(selectedTags.length > 0 || !categories.drum_kit || !categories.sample_pack || !categories.preset_bank || search) && (
+          <div className="flex flex-wrap items-center gap-2 pt-1 pb-1">
+            <span className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest mr-1">
+              Filtros ativos:
+            </span>
+
+            {/* Category filter pills if filtered */}
+            {!(categories.drum_kit && categories.sample_pack && categories.preset_bank) && (
+              <>
+                {categories.drum_kit && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-black dark:bg-white text-white dark:text-black">
+                    Drum Kits
+                  </span>
+                )}
+                {categories.sample_pack && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-black dark:bg-white text-white dark:text-black">
+                    Sample Packs
+                  </span>
+                )}
+                {categories.preset_bank && (
+                  <span className="inline-flex items-center gap-1 px-2.5 py-1 text-[10px] font-mono font-bold uppercase bg-black dark:bg-white text-white dark:text-black">
+                    Preset Banks
+                  </span>
+                )}
+              </>
+            )}
+
+            {/* Selected Tag Pills */}
+            {selectedTags.map((tag) => (
+              <button
+                key={tag}
+                type="button"
+                onClick={() => handleTagToggle(tag)}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold uppercase border border-neutral-300 dark:border-neutral-600 hover:border-red-500 hover:text-red-500 bg-white dark:bg-neutral-900 transition-colors cursor-pointer"
+                title={`Remover tag ${tag}`}
+              >
+                <span>#{tag}</span>
+                <span className="text-xs">&times;</span>
+              </button>
+            ))}
+
+            {/* Search Pill */}
+            {search && (
+              <button
+                type="button"
+                onClick={() => setSearch('')}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-[10px] font-mono font-bold uppercase border border-neutral-300 dark:border-neutral-600 hover:border-red-500 hover:text-red-500 bg-white dark:bg-neutral-900 transition-colors cursor-pointer"
+              >
+                <span>"{search}"</span>
+                <span className="text-xs">&times;</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={resetFilters}
+              className="text-[10px] font-mono uppercase underline text-neutral-500 hover:text-black dark:hover:text-white cursor-pointer ml-1"
+            >
+              Limpar todos
+            </button>
+          </div>
+        )}
+
         {/* Empty Search Handler */}
         {displayedKits.length === 0 ? (
           <div className="py-24 text-center border-2 border-dashed border-neutral-200 dark:border-neutral-800 flex flex-col items-center justify-center gap-3">
@@ -451,10 +522,10 @@ export default function CatalogView({
                 <div
                   key={item.id}
                   onClick={() => onSelectKit(item.id)}
-                  className="group flex flex-col gap-3 border border-transparent hover:border-neutral-200 dark:hover:border-white/15 p-3 -m-3 transition-colors duration-200 cursor-pointer relative bg-transparent hover:bg-white dark:hover:bg-white/[0.04] rounded-sm"
+                  className="group flex flex-col gap-3 border border-transparent hover:border-neutral-200 dark:hover:border-white/15 p-3 transition-all duration-300 cursor-pointer relative bg-transparent hover:bg-white dark:hover:bg-white/[0.04] rounded-xs"
                 >
                   {/* Visual Cover with sliding Vinyl Record */}
-                  <div className="w-full aspect-square bg-neutral-100 dark:bg-neutral-900 relative overflow-hidden flex items-center justify-center border border-neutral-200 dark:border-neutral-800">
+                  <div className="aspect-square bg-neutral-100 dark:bg-neutral-900 relative overflow-hidden border border-neutral-200 dark:border-neutral-800 rounded-xs">
                     {/* Minimalist Vinyl Record */}
                     <div
                       className={`absolute top-1/2 -translate-y-1/2 transition-all duration-700 ease-out z-10 ${
@@ -482,7 +553,7 @@ export default function CatalogView({
                       <img
                         alt={item.title}
                         src={item.coverImage}
-                        className="w-full h-full object-cover grayscale group-hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover grayscale opacity-95 group-hover:scale-105 group-hover:opacity-100 transition-all duration-500"
                         referrerPolicy="no-referrer"
                       />
                       {/* Play/Pause Button Cue */}

@@ -164,12 +164,10 @@ export default function VinylRecord({
         </div>
       )}
 
-      {/* Play/Pause Pulse indicator overlay when hovered */}
+      {/* Play/Pause Pulse indicator overlay when directly hovered */}
       {onTogglePlay && (
         <div
-          className={`absolute inset-0 rounded-full bg-black/25 flex items-center justify-center transition-opacity duration-200 z-30 ${
-            isPlaying ? 'opacity-0 group-hover:opacity-100' : 'opacity-0 group-hover:opacity-100'
-          }`}
+          className="absolute inset-0 rounded-full bg-black/25 flex items-center justify-center transition-opacity duration-200 z-30 opacity-0 hover:opacity-100"
         >
           <div className="w-8 h-8 rounded-full bg-black/80 dark:bg-white/90 text-white dark:text-black flex items-center justify-center shadow-lg backdrop-blur-xs border border-white/20">
             {isPlaying ? (

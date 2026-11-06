@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { ViewType } from '../types';
-import { ShoppingBag, User, LogOut, Menu, X, ArrowUpRight } from 'lucide-react';
+import { ShoppingBag, User, LogOut, Menu, X, ArrowUpRight, Globe } from 'lucide-react';
 import ThemeToggle from './ThemeToggle';
+import { useLanguage } from '../context/LanguageContext';
 
 interface NavbarProps {
   currentView: ViewType;
@@ -12,6 +13,8 @@ interface NavbarProps {
   isLoggedIn?: boolean;
   userName?: string;
   onLogout?: () => void;
+  onFilterCatalog?: (category: 'drum_kit' | 'sample_pack' | 'preset_bank' | 'all') => void;
+  activeCatalogCategory?: 'drum_kit' | 'sample_pack' | 'preset_bank' | 'all';
 }
 
 export default function Navbar({
@@ -22,11 +25,23 @@ export default function Navbar({
   isLoggedIn = false,
   userName,
   onLogout,
+  onFilterCatalog,
+  activeCatalogCategory = 'all',
 }: NavbarProps) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { language, toggleLanguage, t } = useLanguage();
 
   const handleNavClick = (view: ViewType) => {
     onNavigate(view);
+    setMobileMenuOpen(false);
+  };
+
+  const handleCategoryClick = (category: 'drum_kit' | 'sample_pack' | 'preset_bank' | 'all') => {
+    if (onFilterCatalog) {
+      onFilterCatalog(category);
+    } else {
+      onNavigate('catalog');
+    }
     setMobileMenuOpen(false);
   };
 
@@ -48,39 +63,51 @@ export default function Navbar({
             </span>
           </button>
 
-          {/* Minimalist Desktop Navigation Links */}
-          <nav className="hidden md:flex items-center gap-6 font-mono text-xs uppercase tracking-wider">
+          {/* Minimalist Desktop Navigation Links (with direct catalog category state change) */}
+          <nav className="hidden md:flex items-center gap-5 lg:gap-6 font-mono text-xs uppercase tracking-wider">
             <button
               id="nav-link-browse"
-              onClick={() => handleNavClick('catalog')}
+              onClick={() => handleCategoryClick('all')}
               className={`transition-colors py-1 cursor-pointer select-none ${
-                currentView === 'catalog'
-                  ? 'text-primary font-bold border-b border-primary'
+                currentView === 'catalog' && activeCatalogCategory === 'all'
+                  ? 'text-primary font-bold border-b-2 border-primary'
                   : 'text-neutral-500 hover:text-primary'
               }`}
             >
-              Catálogo
+              {t.nav.catalog}
             </button>
             <button
               id="nav-link-drumkits"
-              onClick={() => handleNavClick('catalog')}
-              className="text-neutral-500 hover:text-primary transition-colors py-1 cursor-pointer select-none"
+              onClick={() => handleCategoryClick('drum_kit')}
+              className={`transition-colors py-1 cursor-pointer select-none ${
+                currentView === 'catalog' && activeCatalogCategory === 'drum_kit'
+                  ? 'text-primary font-bold border-b-2 border-primary'
+                  : 'text-neutral-500 hover:text-primary'
+              }`}
             >
-              Drum Kits
+              {t.nav.drumKits}
             </button>
             <button
               id="nav-link-samples"
-              onClick={() => handleNavClick('catalog')}
-              className="text-neutral-500 hover:text-primary transition-colors py-1 cursor-pointer select-none"
+              onClick={() => handleCategoryClick('sample_pack')}
+              className={`transition-colors py-1 cursor-pointer select-none ${
+                currentView === 'catalog' && activeCatalogCategory === 'sample_pack'
+                  ? 'text-primary font-bold border-b-2 border-primary'
+                  : 'text-neutral-500 hover:text-primary'
+              }`}
             >
-              Samples
+              {t.nav.samples}
             </button>
             <button
               id="nav-link-serum"
-              onClick={() => handleNavClick('catalog')}
-              className="text-neutral-500 hover:text-primary transition-colors py-1 cursor-pointer select-none"
+              onClick={() => handleCategoryClick('preset_bank')}
+              className={`transition-colors py-1 cursor-pointer select-none ${
+                currentView === 'catalog' && activeCatalogCategory === 'preset_bank'
+                  ? 'text-primary font-bold border-b-2 border-primary'
+                  : 'text-neutral-500 hover:text-primary'
+              }`}
             >
-              Presets
+              {t.nav.presets}
             </button>
             <button
               id="nav-link-sell"
@@ -91,7 +118,7 @@ export default function Navbar({
                   : 'border-outline-variant/80 hover:border-primary text-neutral-700 dark:text-neutral-200 hover:text-primary'
               }`}
             >
-              <span>+ Publicar Kit</span>
+              <span>+ {t.nav.publishKit}</span>
               <ArrowUpRight className="w-3 h-3 opacity-70" />
             </button>
           </nav>
@@ -99,6 +126,19 @@ export default function Navbar({
 
         {/* Minimalist Action Controls */}
         <div className="flex items-center gap-1 sm:gap-2">
+          {/* Globe Language Switcher (Item 1: navbar com simbolo do globo para mudança de idioma) */}
+          <button
+            id="nav-btn-language"
+            type="button"
+            onClick={toggleLanguage}
+            className="flex items-center gap-1.5 px-2 py-1.5 rounded-sm border border-neutral-200 dark:border-neutral-800 hover:border-black dark:hover:border-white text-neutral-700 dark:text-neutral-300 hover:text-primary transition-all cursor-pointer font-mono text-[11px] font-bold uppercase select-none"
+            title={language === 'pt' ? 'Mudar para English (US)' : 'Switch to Português (BR)'}
+            aria-label="Mudar idioma"
+          >
+            <Globe className="w-3.5 h-3.5 text-primary shrink-0" />
+            <span className="leading-none">{language.toUpperCase()}</span>
+          </button>
+
           {/* Theme Toggle */}
           <ThemeToggle id="nav-theme-toggle" className="p-2" />
 
@@ -107,7 +147,7 @@ export default function Navbar({
             id="nav-btn-cart"
             onClick={onOpenCart}
             className="relative p-2 text-neutral-600 dark:text-neutral-300 hover:text-primary transition-colors cursor-pointer"
-            title="Carrinho"
+            title={t.nav.cart}
             aria-label="Carrinho de compras"
           >
             <ShoppingBag className="w-4 h-4" />
@@ -132,11 +172,11 @@ export default function Navbar({
                     ? 'text-primary font-bold'
                     : 'text-neutral-600 dark:text-neutral-300 hover:text-primary'
                 }`}
-                title="Meu Perfil"
+                title={t.nav.profile}
               >
                 <User className="w-3.5 h-3.5" />
                 <span className="max-w-[100px] truncate hidden sm:inline">
-                  {userName || 'Produtor'}
+                  {userName || t.nav.producer}
                 </span>
               </button>
 
@@ -145,8 +185,8 @@ export default function Navbar({
                   id="nav-btn-logout"
                   onClick={onLogout}
                   className="p-2 text-neutral-400 hover:text-primary transition-colors cursor-pointer"
-                  title="Sair da conta"
-                  aria-label="Sair"
+                  title={t.nav.logout}
+                  aria-label={t.nav.logout}
                 >
                   <LogOut className="w-3.5 h-3.5" />
                 </button>
@@ -163,7 +203,7 @@ export default function Navbar({
                     : 'border-outline-variant text-neutral-700 dark:text-neutral-300 hover:border-primary hover:text-primary'
                 }`}
               >
-                Entrar
+                {t.nav.login}
               </button>
             </div>
           )}
@@ -185,31 +225,43 @@ export default function Navbar({
       {mobileMenuOpen && (
         <div className="md:hidden border-t border-outline-variant/60 bg-background/98 backdrop-blur-2xl px-5 py-4 space-y-2 font-mono text-xs uppercase tracking-wider animate-in fade-in slide-in-from-top-2 duration-150 shadow-2xl">
           <button
-            onClick={() => handleNavClick('catalog')}
+            onClick={() => handleCategoryClick('all')}
             className="w-full text-left py-2.5 px-1 text-neutral-800 dark:text-neutral-200 hover:text-primary flex items-center justify-between border-b border-outline-variant/40"
           >
-            <span className="font-bold">Catálogo Completo</span>
+            <span className="font-bold">{t.nav.fullCatalog}</span>
             <span className="text-neutral-400">&rarr;</span>
           </button>
           
           <div className="grid grid-cols-3 gap-2 py-1 text-[11px]">
             <button
-              onClick={() => handleNavClick('catalog')}
-              className="py-2 px-2 text-center bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border border-outline-variant/60"
+              onClick={() => handleCategoryClick('drum_kit')}
+              className={`py-2 px-2 text-center transition-colors border ${
+                activeCatalogCategory === 'drum_kit'
+                  ? 'bg-primary text-on-primary font-bold border-primary'
+                  : 'bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border-outline-variant/60'
+              }`}
             >
-              Drum Kits
+              {t.nav.drumKits}
             </button>
             <button
-              onClick={() => handleNavClick('catalog')}
-              className="py-2 px-2 text-center bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border border-outline-variant/60"
+              onClick={() => handleCategoryClick('sample_pack')}
+              className={`py-2 px-2 text-center transition-colors border ${
+                activeCatalogCategory === 'sample_pack'
+                  ? 'bg-primary text-on-primary font-bold border-primary'
+                  : 'bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border-outline-variant/60'
+              }`}
             >
-              Samples
+              {t.nav.samples}
             </button>
             <button
-              onClick={() => handleNavClick('catalog')}
-              className="py-2 px-2 text-center bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border border-outline-variant/60"
+              onClick={() => handleCategoryClick('preset_bank')}
+              className={`py-2 px-2 text-center transition-colors border ${
+                activeCatalogCategory === 'preset_bank'
+                  ? 'bg-primary text-on-primary font-bold border-primary'
+                  : 'bg-neutral-100 dark:bg-neutral-800/80 text-neutral-600 dark:text-neutral-400 hover:text-primary border-outline-variant/60'
+              }`}
             >
-              Presets
+              {t.nav.presets}
             </button>
           </div>
 
@@ -218,7 +270,7 @@ export default function Navbar({
             className="w-full text-left py-2.5 px-1 font-bold text-neutral-900 dark:text-neutral-100 hover:text-primary flex items-center justify-between border-b border-outline-variant/40"
           >
             <span className="flex items-center gap-1.5 text-primary">
-              <span>+ Publicar SoundKit</span>
+              <span>+ {t.nav.publishKit}</span>
             </span>
             <ArrowUpRight className="w-3.5 h-3.5 text-neutral-400" />
           </button>

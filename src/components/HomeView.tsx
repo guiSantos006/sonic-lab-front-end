@@ -5,20 +5,24 @@ import VinylRecord from './VinylRecord';
 import MorphingText from './MorphingText';
 import Waveform from './Waveform';
 import { audioPlayer } from '../utils/audioPlayer';
+import { useLanguage } from '../context/LanguageContext';
 
 interface HomeViewProps {
   kits: Kit[];
   onSelectKit: (id: string) => void;
   onNavigate: (view: any) => void;
   onAddToCart: (kit: Kit) => void;
+  onFilterCatalog?: (category: 'drum_kit' | 'sample_pack' | 'preset_bank' | 'all') => void;
 }
 
 export default function HomeView({
   kits,
   onSelectKit,
   onNavigate,
-  onAddToCart
+  onAddToCart,
+  onFilterCatalog,
 }: HomeViewProps) {
+  const { t } = useLanguage();
   // Sync with global audio player state
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [playProgress, setPlayProgress] = useState<{ [key: string]: number }>({});
@@ -86,7 +90,7 @@ export default function HomeView({
       {/* Hero Header */}
       <header className="w-full py-10 sm:py-16 md:py-24 max-w-[1440px] mx-auto flex flex-col items-center justify-center text-center px-4 animate-fade-in">
         <h1 className="font-sans text-3xl sm:text-5xl md:text-7xl font-extrabold max-w-[950px] mb-6 sm:mb-8 text-primary tracking-tighter uppercase leading-tight flex flex-col items-center">
-          <span className="block mb-1 sm:mb-2">Your arsenal for</span>
+          <span className="block mb-1 sm:mb-2">{t.home.heroTitlePrefix}</span>
           <MorphingText
             texts={[
               'production.',
@@ -101,21 +105,21 @@ export default function HomeView({
           />
         </h1>
         <p className="font-sans text-sm sm:text-base md:text-lg text-neutral-500 dark:text-neutral-400 max-w-[600px] mb-8 sm:mb-10 leading-relaxed font-normal px-2">
-          The largest portal for Drum Kits, Samples and Presets. Essential sounds curated to elevate your musical production tracks.
+          {t.home.heroSubtitle}
         </p>
         <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
           <button
-            onClick={() => onNavigate('catalog')}
+            onClick={() => onFilterCatalog ? onFilterCatalog('all') : onNavigate('catalog')}
             className="w-full sm:w-auto bg-black text-white dark:bg-white dark:text-black border border-black dark:border-white px-10 py-4 font-mono text-xs font-bold uppercase tracking-widest hover:opacity-90 transition-opacity cursor-pointer flex items-center justify-center gap-2"
           >
-            Explore Kits
+            {t.home.exploreKits}
             <ChevronRight className="w-4 h-4" />
           </button>
           <button
             onClick={() => onNavigate('sell')}
             className="w-full sm:w-auto bg-white dark:bg-transparent text-black dark:text-white border border-black dark:border-white/25 px-10 py-4 font-mono text-xs font-bold uppercase tracking-widest hover:bg-neutral-50 dark:hover:bg-white/10 transition-colors cursor-pointer"
           >
-            Sell your Kit
+            {t.home.sellKit}
           </button>
         </div>
       </header>
@@ -132,10 +136,10 @@ export default function HomeView({
             </p>
           </div>
           <button
-            onClick={() => onNavigate('catalog')}
+            onClick={() => onFilterCatalog ? onFilterCatalog('drum_kit') : onNavigate('catalog')}
             className="font-mono text-xs uppercase text-neutral-500 hover:text-black dark:hover:text-white hover:underline tracking-wider cursor-pointer"
           >
-            View all
+            {t.home.viewAll}
           </button>
         </div>
 
@@ -257,18 +261,11 @@ export default function HomeView({
           </div>
           <div className="flex gap-2">
             <button
-              onClick={() => onNavigate('catalog')}
-              className="p-2 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              title="Anterior"
+              onClick={() => onFilterCatalog ? onFilterCatalog('sample_pack') : onNavigate('catalog')}
+              className="p-2 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer text-xs font-mono uppercase"
+              title={t.home.viewAll}
             >
-              <ChevronRight className="w-4 h-4 rotate-180" />
-            </button>
-            <button
-              onClick={() => onNavigate('catalog')}
-              className="p-2 border border-neutral-200 dark:border-neutral-800 text-neutral-700 dark:text-neutral-300 hover:bg-neutral-100 dark:hover:bg-neutral-800 transition-colors cursor-pointer"
-              title="Próximo"
-            >
-              <ChevronRight className="w-4 h-4" />
+              <span>{t.home.viewAll} &rarr;</span>
             </button>
           </div>
         </div>
@@ -398,13 +395,21 @@ export default function HomeView({
 
       {/* Section: Serum Banks (Preset List matching graphic wireframe) */}
       <section className="max-w-[1440px] mx-auto w-full px-4 mb-8">
-        <div className="flex flex-col mb-8 text-left">
-          <h2 className="font-sans text-2xl md:text-3xl font-extrabold text-primary uppercase tracking-tight">
-            Serum Banks
-          </h2>
-          <p className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest mt-1">
-            Wavetables and presets for modern synthesizers
-          </p>
+        <div className="flex justify-between items-end mb-8 border-b border-neutral-200 dark:border-neutral-800 pb-4">
+          <div>
+            <h2 className="font-sans text-2xl md:text-3xl font-extrabold text-primary uppercase tracking-tight">
+              Preset Banks
+            </h2>
+            <p className="font-mono text-[10px] text-neutral-400 uppercase tracking-widest mt-1">
+              Wavetables and presets for modern synthesizers
+            </p>
+          </div>
+          <button
+            onClick={() => onFilterCatalog ? onFilterCatalog('preset_bank') : onNavigate('catalog')}
+            className="font-mono text-xs uppercase text-neutral-500 hover:text-black dark:hover:text-white hover:underline tracking-wider cursor-pointer"
+          >
+            {t.home.viewAll}
+          </button>
         </div>
 
         {/* Dynamic User Preset Banks or Call To Action */}

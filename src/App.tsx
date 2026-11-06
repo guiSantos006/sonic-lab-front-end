@@ -116,6 +116,7 @@ export default function App() {
   // Navigation States
   const [currentView, setCurrentView] = useState<ViewType>('home');
   const [selectedKitId, setSelectedKitId] = useState<string>('');
+  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState<'drum_kit' | 'sample_pack' | 'preset_bank' | 'all'>('all');
   const [registeredEmail, setRegisteredEmail] = useState<string>('');
   const [loginSuccessNotice, setLoginSuccessNotice] = useState<string | null>(null);
 
@@ -454,6 +455,13 @@ export default function App() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
+  // Dedicated filter handler when clicking DrumKits / Samples / Presets (Item 3: drumkits/samplepacks/serumbanks mudando o estado do catálogo)
+  const handleFilterCatalog = (category: 'drum_kit' | 'sample_pack' | 'preset_bank' | 'all') => {
+    setCatalogCategoryFilter(category);
+    setCurrentView('catalog');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   // Called when user registers a new account successfully
   const handleRegisterSuccess = (email: string) => {
     setRegisteredEmail(email);
@@ -538,7 +546,7 @@ export default function App() {
           )}
         </AnimatePresence>
 
-        {/* Top sticky navbar */}
+        {/* Top sticky navbar with Globe Language and Category Filters */}
         <Navbar
           currentView={currentView}
           onNavigate={handleNavigate}
@@ -551,6 +559,8 @@ export default function App() {
           isLoggedIn={isLoggedIn}
           userName={profile.name}
           onLogout={handleLogout}
+          onFilterCatalog={handleFilterCatalog}
+          activeCatalogCategory={catalogCategoryFilter}
         />
 
         {/* Main Container workspace with smooth transitions and margins */}
@@ -573,6 +583,7 @@ export default function App() {
                     onSelectKit={handleSelectKitDetails}
                     onNavigate={handleNavigate}
                     onAddToCart={handleAddToCart}
+                    onFilterCatalog={handleFilterCatalog}
                   />
                 )}
 
@@ -581,6 +592,7 @@ export default function App() {
                     kits={kits}
                     onSelectKit={handleSelectKitDetails}
                     onAddToCart={handleAddToCart}
+                    initialCategory={catalogCategoryFilter}
                   />
                 )}
 
